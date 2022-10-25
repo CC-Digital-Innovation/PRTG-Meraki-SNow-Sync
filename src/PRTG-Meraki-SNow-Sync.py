@@ -1272,9 +1272,9 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
 
         # Try to make a new incident for this mismatched Clover.
         try:
-            # ticket = snow_incident_table.create(payload=ticket_payload)
-            # global_logger.info('Successfully created the INC!')
-            # time.sleep(1)
+            snow_incident_table.create(payload=ticket_payload)
+            global_logger.info('Successfully created the INC!')
+            time.sleep(1)
             total_tickets += 1
         except pysnow.exceptions as e:
             global_logger.error('An error occurred when trying to make a new '
@@ -1292,16 +1292,15 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         global_logger.warning('Opening INC for ' + lost_clover['name'] + ' ' +
                               'because I could not find it in Meraki nor PRTG')
         ticket_payload = {
-            'short_description': '[TEST] Vitu Clover Sync issue for ' +
+            'short_description': 'Vitu Clover Sync issue for ' +
                                  lost_clover['mac_address'],
-            'description': '[TEST] Lost Clover found in ServiceNow - '
+            'description': 'Lost Clover found in ServiceNow - '
                            'Clover could not be found in Meraki nor PRTG',
-            'caller_id': 'Anthony Farina',
-            'assigned_to': 'Anthony Farina',
-            'company': 'Computacenter',
+            'caller_id': 'Cody Harper',
+            'assignment_group': 'Expert Services Level One Team',
             'u_customer': 'Vitu',
             'location': lost_clover['location.name'],
-            'cmdb_ci': lost_clover['name'],
+            'configuration_item': lost_clover['name'],
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1375,14 +1374,13 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                                 invalid_meraki.name +
                                 ' because I do not have the window number')
             ticket_payload = {
-                'short_description': '[TEST] Vitu Clover Sync issue for ' +
+                'short_description': 'Vitu Clover Sync issue for ' +
                                      invalid_meraki.mac_address,
-                'description': '[TEST] The Clover name was not able to be '
+                'description': 'The Clover name was not able to be '
                                'autonomously fixed - Clover name must be '
                                'fixed manually',
-                'caller_id': 'Anthony Farina',
-                'assigned_to': 'Anthony Farina',
-                'company': 'Computacenter',
+                'caller_id': 'Cody Harper',
+                'assignment_group': 'Expert Services Level One Team',
                 'u_customer': 'Vitu',
                 'location': invalid_meraki.site,
                 'configuration_item': 'AG-LAB-FULLSET',
@@ -1453,14 +1451,13 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                                 invalid_prtg.name +
                                 ' because I do not have the window number')
             ticket_payload = {
-                'short_description': '[TEST] Vitu Clover Sync issue for ' +
+                'short_description': 'Vitu Clover Sync issue for ' +
                                      invalid_prtg.mac_address,
-                'description': '[TEST] The Clover name was not able to be '
+                'description': 'The Clover name was not able to be '
                                'autonomously fixed - Clover name must be '
                                'fixed manually',
-                'caller_id': 'Anthony Farina',
-                'assigned_to': 'Anthony Farina',
-                'company': 'Computacenter',
+                'caller_id': 'Cody Harper',
+                'assignment_group': 'Expert Services Level One Team',
                 'u_customer': 'Vitu',
                 'location': invalid_prtg.site,
                 'configuration_item': 'AG-LAB-FULLSET',
@@ -1511,16 +1508,16 @@ def make_incident_payload(clover_obj) -> dict:
         prtg_clover = clover_obj.prtg_clover
 
         ticket_payload = {
-            'short_description': '[TEST] Vitu Clover Sync issue for ' +
+            'short_description': 'Vitu Clover Sync issue for ' +
                                  meraki_clover.mac_address,
-            'description': '[TEST] ' + clover_obj.mismatch_error,
-            'caller_id': 'Anthony Farina',
-            'assigned_to': 'Anthony Farina',
-            'company': 'Computacenter',
+            'description': clover_obj.mismatch_error,
+            'caller_id': 'Cody Harper',
+            'assignment_group': 'Expert Services Level One Team',
             'u_customer': 'Vitu',
             'location': prtg_clover.site,
-            'cmdb_ci': prtg_clover.site + ' Clover Window' +
-                       prtg_clover.window_number,
+            'configuration_item':
+                prtg_clover.site + ' Clover Window' +
+                prtg_clover.window_number,
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1529,16 +1526,16 @@ def make_incident_payload(clover_obj) -> dict:
     elif isinstance(clover_obj, MerakiClover) or \
             isinstance(clover_obj, PRTGClover):
         ticket_payload = {
-            'short_description': '[TEST] Vitu Clover Sync issue for ' +
+            'short_description': 'Vitu Clover Sync issue for ' +
                                  clover_obj.mac_address,
-            'description': '[TEST] ' + clover_obj.error,
-            'caller_id': 'Anthony Farina',
-            'assigned_to': 'Anthony Farina',
-            'company': 'Computacenter',
+            'description': clover_obj.error,
+            'caller_id': 'Cody Harper',
+            'assignment_group': 'Expert Services Level One Team',
             'u_customer': 'Vitu',
             'location': clover_obj.site,
-            'cmdb_ci': clover_obj.site + ' Clover Window' +
-                       clover_obj.window_number,
+            'configuration_item':
+                clover_obj.site + ' Clover Window' +
+                clover_obj.window_number,
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1599,8 +1596,8 @@ def make_automated_ticket(platform: str, new_name: str, clover: object) -> \
         return False
 
     # Make a new short description for the request item ticket.
-    short_desc = '[TEST] [' + platform + '] Automated Vitu Clover Sync ' \
-                                         'Request for ' + clover.mac_address
+    short_desc = '[' + platform + '] Automated Vitu Clover Sync ' \
+                 'Request for ' + clover.mac_address
 
     # Extract the sys ID of the request from the response.
     snow_req_resp_json = snow_req_resp.json()
@@ -1616,9 +1613,8 @@ def make_automated_ticket(platform: str, new_name: str, clover: object) -> \
         payload={
             'short_description': short_desc,
             'description': clover.error,
-            'caller_id': 'Anthony Farina',
-            'assigned_to': 'Anthony Farina',
-            'company': 'Computacenter',
+            'caller_id': 'Cody Harper',
+            'assigned_to': 'Phillip Johnson',
             'u_customer': 'Vitu',
             'location': clover.site,
             'configuration_item':
