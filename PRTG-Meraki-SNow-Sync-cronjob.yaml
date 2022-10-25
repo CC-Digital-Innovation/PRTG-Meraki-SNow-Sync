@@ -17,7 +17,7 @@ spec:
                 - name: VAULT_ADDR
                   value: http://vault.vault:8200
               image: registry.quokka.ninja/ccfs/prtg-meraki-snow-sync:latest
-              name: newton
+              name: prtg-meraki-snow-sync
           # Credentials secret added for authorizing private repository
           imagePullSecrets:
             - name: gitlab-cr
