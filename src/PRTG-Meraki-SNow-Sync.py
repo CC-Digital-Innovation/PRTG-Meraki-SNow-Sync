@@ -75,6 +75,9 @@ CLOVER_MAC_REGEX = re.compile(r'd4:95:24(:[\da-f]{2}){3}')
 # Logger constant global variables.
 LOGGER_NAME = CONFIG['Logger Info']['name']
 
+# Other constant global variables.
+DC_TICKETING = False
+
 
 # Represents a Clover payment device in Meraki.
 class MerakiClover(object):
@@ -1192,39 +1195,43 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         mac_address = sync_ritm['short_description'][-17:]
         existing_sync_ritms[mac_address] = sync_ritm
 
-    # Make a ticket for each PRTG Clover with a "dc" MAC address sensor value.
-    for dc_mac_clover in clover_sync_status.prtg_dc_macs.values():
-        # Check if a ticket for this Clover already exists.
-        if dc_mac_clover.mac_address in existing_sync_incidents.keys() or \
-           dc_mac_clover.mac_address in existing_sync_ritms.keys():
-            continue
+    # Check if "dc" MAC ticketing is enabled.
+    if DC_TICKETING:
+        # Make a ticket for each PRTG Clover with a "dc" MAC address sensor
+        # value.
+        for dc_mac_clover in clover_sync_status.prtg_dc_macs.values():
+            # Check if a ticket for this Clover already exists.
+            if dc_mac_clover.mac_address in existing_sync_incidents.keys() or \
+               dc_mac_clover.mac_address in existing_sync_ritms.keys():
+                continue
 
-        # Create the payload to make a new INC ticket in ServiceNow.
-        global_logger.warning('Opening INC for Clover ' + dc_mac_clover.name +
-                              ' because this Clover''s MAC address sensor' +
-                              ' is returning a "dc" MAC address')
-        ticket_payload = \
-            make_incident_payload(dc_mac_clover, AffectedPlatform.PRTG)
+            # Create the payload to make a new INC ticket in ServiceNow.
+            global_logger.warning(
+                'Opening INC for Clover ' + dc_mac_clover.name + ' because '
+                'this Clover''s MAC address sensor is returning a "dc" MAC '
+                'address')
+            ticket_payload = \
+                make_incident_payload(dc_mac_clover, AffectedPlatform.PRTG)
 
-        # Check if the payload creation was unsuccessful.
-        if not ticket_payload:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                dc_mac_clover.name)
-            continue
+            # Check if the payload creation was unsuccessful.
+            if not ticket_payload:
+                global_logger.error(
+                    'An error occurred when trying to make a new INC in '
+                    'ServiceNow for Clover ' + dc_mac_clover.name)
+                continue
 
-        # Try to make a new incident for this exclusive Meraki Clover.
-        try:
-            snow_incident_table.create(payload=ticket_payload)
-            global_logger.info('Successfully created the INC for Clover ' +
-                               dc_mac_clover.name + '!')
-            time.sleep(1)
-            total_tickets += 1
-        except pysnow.exceptions as e:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                dc_mac_clover.name)
-            global_logger.error('Error: ' + str(e))
+            # Try to make a new incident for this exclusive Meraki Clover.
+            try:
+                snow_incident_table.create(payload=ticket_payload)
+                global_logger.info('Successfully created the INC for Clover ' +
+                                   dc_mac_clover.name + '!')
+                time.sleep(1)
+                total_tickets += 1
+            except pysnow.exceptions as e:
+                global_logger.error(
+                    'An error occurred when trying to make a new INC in '
+                    'ServiceNow for Clover ' + dc_mac_clover.name)
+                global_logger.error('Error: ' + str(e))
 
     # Make a ticket for each exclusive Meraki Clover.
     for excl_clover in clover_sync_status.meraki_clovers.values():
