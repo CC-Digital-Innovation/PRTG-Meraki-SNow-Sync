@@ -1428,9 +1428,9 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                                 ' because I do not have the window number')
             ticket_payload = {
                 'short_description':
-                    '[Meraki] Vitu Clover Sync issue at site ' +
+                    '[Meraki] Vitu Clover Sync issue at ' +
                     invalid_meraki.site + ' for Clover ' +
-                    invalid_meraki.name + ' ' + invalid_meraki.mac_address,
+                    invalid_meraki.mac_address,
                 'description':
                     'The Clover at site ' + invalid_meraki.site +
                     ' with name ' + invalid_meraki.name + ' cannot be '
@@ -1513,8 +1513,9 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                                 ' because I do not have the window number')
             ticket_payload = {
                 'short_description':
-                    '[PRTG] Vitu Clover Sync issue for Clover ' +
-                    invalid_prtg.name + ' ' + invalid_prtg.mac_address,
+                    '[PRTG] Vitu Clover Sync issue at ' +
+                    invalid_prtg.site + ' for Clover ' +
+                    invalid_prtg.mac_address,
                 'description':
                     'The Clover with name ' + invalid_prtg.name + ' cannot be '
                     'autonomously fixed because a window number was unable to'
@@ -1575,9 +1576,9 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> \
 
         ticket_payload = {
             'short_description':
-                '[PRTG] [Meraki] Vitu Clover Sync issue for ' +
-                prtg_clover.site + ' Clover Window' +
-                prtg_clover.window_number + ' ' + meraki_clover.mac_address,
+                '[PRTG] [Meraki] Vitu Clover Sync issue at ' +
+                prtg_clover.site + ' for Clover ' +
+                meraki_clover.mac_address,
             'description': clover_obj.mismatch_error,
             'caller_id': 'Cody Harper',
             'assignment_group': 'Expert Services Level One Team',
@@ -1595,9 +1596,9 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> \
             isinstance(clover_obj, PRTGClover):
         ticket_payload = {
             'short_description':
-                '[' + str(platform.value) + '] Vitu Clover Sync issue for ' +
-                clover_obj.site + ' Clover Window' +
-                clover_obj.window_number + ' ' + clover_obj.mac_address,
+                '[' + str(platform.value) + '] Vitu Clover Sync issue at ' +
+                clover_obj.site + ' for Clover ' +
+                clover_obj.mac_address,
             'description': clover_obj.error,
             'caller_id': 'Cody Harper',
             'assignment_group': 'Expert Services Level One Team',
@@ -1668,9 +1669,8 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
 
     # Make a new short description for the request item ticket.
     short_desc = '[' + str(platform.value) + '] Automated Vitu Clover Sync ' \
-                 'Request at site ' + clover.site + ' for Clover ' + \
-                 clover_name + ' to be renamed to ' + new_name + \
-                 ' with MAC address ' + clover.mac_address
+                 'Request at ' + clover.site + ' for Clover ' + \
+                 clover.mac_address
 
     # Extract the sys ID of the request from the response.
     snow_req_resp_json = snow_req_resp.json()
