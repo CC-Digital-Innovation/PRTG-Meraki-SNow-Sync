@@ -316,8 +316,8 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                        str(unknown_devices_count) + ') -------------------')
     for unknown_device in sorted(clover_sync_status.meraki_unknown_devices,
                                  key=lambda device:
-                                 device['recentDeviceName'] + ' ' +
-                                 device['description']):
+                                 str(device['recentDeviceName']) + ' ' +
+                                 str(device['description'])):
         global_logger.warning('    ' +
                               str(unknown_device['recentDeviceName']) +
                               ' ' + str(unknown_device['description']))
@@ -331,10 +331,10 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                        str(offline_devices_count) + ') -------------------')
     for offline_device in sorted(clover_sync_status.
                                  meraki_offline_clovers.values(),
-                                 key=lambda device: device.site + ' ' +
-                                 device.name):
+                                 key=lambda device: str(device.site) + ' ' +
+                                 str(device.name)):
         global_logger.info('    ' + str(offline_device.site) + ' ' +
-                           offline_device.name)
+                           str(offline_device.name))
     global_logger.info(
         '------------------------------------------------------------------')
 
@@ -345,10 +345,10 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                        str(invalid_device_count) + ') -------------------')
     for invalid_device in sorted(clover_sync_status.
                                  meraki_invalid_clovers.values(),
-                                 key=lambda device: device.site + ' ' +
-                                 device.name):
-        global_logger.warning('    ' + invalid_device.site + ' ' +
-                              invalid_device.name)
+                                 key=lambda device: str(device.site) + ' ' +
+                                 str(device.name)):
+        global_logger.warning('    ' + str(invalid_device.site) + ' ' +
+                              str(invalid_device.name))
     global_logger.info(
         '------------------------------------------------------------------')
 
@@ -693,8 +693,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                        str(invalid_device_count) + ') -------------------')
     for invalid_device in sorted(clover_sync_status.
                                  prtg_invalid_clovers.values(),
-                                 key=lambda device: device.name):
-        global_logger.warning('    ' + invalid_device.name)
+                                 key=lambda device: str(device.name)):
+        global_logger.warning('    ' + str(invalid_device.name))
     global_logger.info(
         '------------------------------------------------------------------')
 
@@ -732,8 +732,8 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Go through each valid Meraki Clover and try to find the matching
     # Clover in the PRTG Clovers dictionary.
     for meraki_clover in sorted(all_meraki_clovers.values(),
-                                key=lambda device: device.site + ' ' +
-                                device.name):
+                                key=lambda device: str(device.site) + ' ' +
+                                str(device.name)):
         clover_mac = meraki_clover.mac_address
 
         # Check if the MAC address is not found in the PRTG Clovers dictionary.
@@ -962,8 +962,10 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info('----------------- Exclusive Meraki Clovers (' +
                        str(exclusive_meraki_count) + ') ------------------')
     for clover in sorted(all_meraki_clovers.values(),
-                         key=lambda device: device.site + ' ' + device.name):
-        global_logger.warning('    ' + clover.site + ' ' + clover.name)
+                         key=lambda device: str(device.site) + ' ' +
+                         str(device.name)):
+        global_logger.warning('    ' + str(clover.site) + ' ' +
+                              str(clover.name))
     global_logger.info(
         '------------------------------------------------------------------')
 
@@ -973,8 +975,8 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info('------------------- Exclusive PRTG Clovers (' +
                        str(exclusive_prtg_count) + ') ------------------')
     for clover in sorted(all_prtg_clovers.values(),
-                         key=lambda device: device.name):
-        global_logger.warning('    ' + clover.name)
+                         key=lambda device: str(device.name)):
+        global_logger.warning('    ' + str(clover.name))
     global_logger.info(
         '------------------------------------------------------------------')
 
@@ -1132,8 +1134,8 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info('------------------ Lost ServiceNow Clovers (' +
                        str(lost_clover_count) + ') ------------------')
     for clover in sorted(curr_clover_sync_status.snow_lost_clovers,
-                         key=lambda device: device['name']):
-        global_logger.warning('    ' + clover['name'])
+                         key=lambda device: str(device['name'])):
+        global_logger.warning('    ' + str(clover['name']))
     global_logger.info(
         '------------------------------------------------------------------')
 
