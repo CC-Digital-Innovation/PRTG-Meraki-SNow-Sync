@@ -1,4 +1,3 @@
-import configparser
 from datetime import datetime
 from enum import Enum
 import json
@@ -9,6 +8,7 @@ import re
 import sys
 import time
 
+import configparser
 import meraki
 import pysnow
 import pysnow.exceptions
@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.0.0'
+__version__ = '2.0.3'
 __status__ = 'Released'
 
 
@@ -631,7 +631,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             site=clean_probe,
             window_number=window_num,
             mac_address=mac_address,
-            ip_address=clover['host']
+            ip_address=clover['host'],
+            serial_number=serial_num
         )
         clover_sync_status.prtg_clovers[mac_address] = new_prtg_clover
 
