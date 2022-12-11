@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.0.3'
+__version__ = '2.0.4'
 __status__ = 'Released'
 
 
@@ -509,7 +509,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
         # Get the values from the MAC sensor and S/N sensor.
         mac_address = clover_sync_status.prtg_id_to_mac[prtg_id]
-        serial_num = clover_sync_status.prtg_id_to_sn[prtg_id]
+        full_sn = clover_sync_status.prtg_id_to_sn[prtg_id]
+        short_sn = full_sn.split(' ')[2]
 
         # Check if this Clover's MAC address sensor is returning a "dc" MAC
         # address value.
@@ -529,7 +530,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 window_number=window_num,
                 mac_address=name_mac_address,
                 ip_address=clover['host'],
-                serial_number=serial_num,
+                serial_number=short_sn,
                 error=dc_mac_error
             )
             clover_sync_status.prtg_dc_macs[name_mac_address] = \
@@ -550,7 +551,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 site=clean_probe,
                 mac_address=name_mac_address,
                 ip_address=clover['host'],
-                serial_number=serial_num,
+                serial_number=short_sn,
                 error=unverified_mac_error
             )
             clover_sync_status.prtg_unverified_macs[name_mac_address] = \
@@ -569,7 +570,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 site=clean_probe,
                 mac_address=mac_address,
                 ip_address=clover['host'],
-                serial_number=serial_num,
+                serial_number=short_sn,
                 error=invalid_name_error
             )
             clover_sync_status.prtg_invalid_clovers[mac_address] = \
@@ -594,7 +595,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 window_number=window_num,
                 mac_address=mac_address,
                 ip_address=clover['host'],
-                serial_number=serial_num,
+                serial_number=short_sn,
                 error=invalid_mac_error
             )
             clover_sync_status.prtg_invalid_clovers[mac_address] = \
@@ -616,7 +617,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 window_number=window_num,
                 mac_address=mac_address,
                 ip_address=clover['host'],
-                serial_number=serial_num,
+                serial_number=short_sn,
                 error=invalid_site_error
             )
             clover_sync_status.prtg_invalid_clovers[mac_address] = \
@@ -632,7 +633,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             window_number=window_num,
             mac_address=mac_address,
             ip_address=clover['host'],
-            serial_number=serial_num
+            serial_number=short_sn
         )
         clover_sync_status.prtg_clovers[mac_address] = new_prtg_clover
 

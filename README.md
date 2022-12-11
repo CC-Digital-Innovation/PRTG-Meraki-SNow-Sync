@@ -43,6 +43,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.0.4 - 2022/12/11
+    - Fixed bug that synced full Clover serial number instead of the
+      desired shortened version
+
+
 -  version 2.0.3 - 2022/12/09
     - Fixed bug that prevented S/N syncing
     - Updated README.md to be more robust
