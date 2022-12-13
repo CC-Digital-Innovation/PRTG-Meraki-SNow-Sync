@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.0.4'
+__version__ = '2.0.5'
 __status__ = 'Released'
 
 
@@ -510,7 +510,12 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         # Get the values from the MAC sensor and S/N sensor.
         mac_address = clover_sync_status.prtg_id_to_mac[prtg_id]
         full_sn = clover_sync_status.prtg_id_to_sn[prtg_id]
-        short_sn = full_sn.split(' ')[2]
+
+        # Get the shortened S/N if there's a valid S/N.
+        if full_sn == 'Offline' or full_sn == 'Invalid':
+            short_sn = full_sn
+        else:
+            short_sn = full_sn.split(' ')[2]
 
         # Check if this Clover's MAC address sensor is returning a "dc" MAC
         # address value.

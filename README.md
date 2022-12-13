@@ -43,6 +43,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.0.5 - 2022/12/13
+    - Fixed bug that caused the script to crash when trying to split an
+      invalid S/N string
+
+
 -  version 2.0.4 - 2022/12/11
     - Fixed bug that synced full Clover serial number instead of the
       desired shortened version
