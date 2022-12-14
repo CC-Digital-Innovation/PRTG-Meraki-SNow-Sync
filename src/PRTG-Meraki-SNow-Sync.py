@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.0.5'
+__version__ = '2.0.6'
 __status__ = 'Released'
 
 
@@ -68,8 +68,9 @@ MERAKI_NAME_REGEX = re.compile(r'Window [A-Z]{0,3}\d{1,2}[A-Z]? '
 SITE_INFO_REGEX = re.compile(r' \(.+\)')
 EVERYTHING_BUT_WIND_NUM_REGEX = re.compile(r'\[.+]|Window|([\da-f]{2}:){5}'
                                            r'[\da-f]{2}')
-CLOVER_SN_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z] '
-                             r'[A-Z]\d{3}[A-Z]{2}\d{8}')
+CLOVER_SN_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z] '
+                                  r'[A-Z]\d{3}[A-Z]{2}\d{8}')
+CLOVER_SN_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_MAC_REGEX = re.compile(r'd4:95:24(:[\da-f]{2}){3}')
 
 # Logger constant global variables.
@@ -450,7 +451,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             continue
 
         # Check if the sensor has an invalid value in it.
-        if not CLOVER_SN_REGEX.match(sn_sensor['message_raw']):
+        if not CLOVER_SN_LONG_REGEX.match(sn_sensor['message_raw']):
             clover_sync_status.prtg_id_to_sn[prtg_id] = 'Invalid'
             continue
 
@@ -1097,7 +1098,7 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             snow_update['ip_address'] = prtg_clover.ip_address
 
         # Check if the serial number is incorrect in SNow.
-        if CLOVER_SN_REGEX.match(str(prtg_clover.serial_number)) and \
+        if CLOVER_SN_SHORT_REGEX.match(str(prtg_clover.serial_number)) and \
                 snow_clover['serial_number'] != prtg_clover.serial_number:
             snow_update['serial_number'] = prtg_clover.serial_number
 

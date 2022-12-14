@@ -43,6 +43,10 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.0.6 - 2022/12/14
+    - Fixed bug that wouldn't sync the shortened serial number to ServiceNow
+
+
 -  version 2.0.5 - 2022/12/13
     - Fixed bug that caused the script to crash when trying to split an
       invalid S/N string
