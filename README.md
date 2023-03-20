@@ -43,6 +43,16 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.1.0 - 2023/03/20
+    - Fixed crash when a device in Meraki would have its "recentDeviceName" 
+      be None
+    - Implemented f-strings to replace str() to increase readability / 
+      efficiency
+    - Added fastvue as a remote logger for debugging / redundancy purposes
+    - Added private logging method to simplify title creation in the logs
+    - Updated license
+
+
 -  version 2.0.6 - 2022/12/14
     - Fixed bug that wouldn't sync the shortened serial number to ServiceNow
 

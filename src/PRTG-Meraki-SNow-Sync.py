@@ -18,12 +18,12 @@ import requests
 
 # Module information.
 __author__ = 'Anthony Farina'
-__copyright__ = 'Copyright (C) 2022 Anthony Farina'
+__copyright__ = 'Copyright (C) 2023 Anthony Farina'
 __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.0.6'
+__version__ = '2.1.0'
 __status__ = 'Released'
 
 
@@ -46,13 +46,13 @@ MERAKI_NET_ID = CONFIG['Meraki Info']['net-id']
 
 # ServiceNow constant global variables.
 SNOW_INSTANCE = CONFIG['ServiceNow Info']['instance']
-SNOW_INST_URL = 'https://' + SNOW_INSTANCE + '.service-now.com'
+SNOW_INST_URL = f'https://{SNOW_INSTANCE}.service-now.com'
 SNOW_USERNAME = CONFIG['ServiceNow Info']['username']
 SNOW_PASSWORD = CONFIG['ServiceNow Info']['password']
 SNOW_CMDB_PATH = CONFIG['ServiceNow Info']['cmdb-table']
 SYNC_REQUEST_SYS_ID = CONFIG['ServiceNow Info']['sync-req-sys-id']
-SNOW_ORDER_NOW_PATH = f'/api/sn_sc/servicecatalog/items/' \
-                      f'{SYNC_REQUEST_SYS_ID}/order_now'
+SNOW_ORDER_NOW_PATH = \
+    f'/api/sn_sc/servicecatalog/items/{SYNC_REQUEST_SYS_ID}/order_now'
 SNOW_CLIENT = pysnow.Client(
     instance=SNOW_INSTANCE,
     user=SNOW_USERNAME,
@@ -60,16 +60,16 @@ SNOW_CLIENT = pysnow.Client(
 )
 
 # Regex (regular expression) constant global variables.
-PRTG_NAME_REGEX = re.compile(r'\[[A-Za-z]+\d{3}] Window '
-                             r'[A-Z]{0,3}\d{1,2}[A-Z]? '
-                             r'd4:95:24(:[\da-f]{2}){3}')
-MERAKI_NAME_REGEX = re.compile(r'Window [A-Z]{0,3}\d{1,2}[A-Z]? '
-                               r'd4:95:24(:[\da-f]{2}){3}')
+PRTG_NAME_REGEX = \
+    re.compile(r'\[[A-Za-z]+\d{3}] Window [A-Z]{0,3}\d{1,2}[A-Z]? '
+               r'd4:95:24(:[\da-f]{2}){3}')
+MERAKI_NAME_REGEX = \
+    re.compile(r'Window [A-Z]{0,3}\d{1,2}[A-Z]? d4:95:24(:[\da-f]{2}){3}')
 SITE_INFO_REGEX = re.compile(r' \(.+\)')
-EVERYTHING_BUT_WIND_NUM_REGEX = re.compile(r'\[.+]|Window|([\da-f]{2}:){5}'
-                                           r'[\da-f]{2}')
-CLOVER_SN_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z] '
-                                  r'[A-Z]\d{3}[A-Z]{2}\d{8}')
+EVERYTHING_BUT_WIND_NUM_REGEX = \
+    re.compile(r'\[.+]|Window|([\da-f]{2}:){5}[\da-f]{2}')
+CLOVER_SN_LONG_REGEX = \
+    re.compile(r'Clover [A-Z]\d{3}[A-Z] [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SN_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_MAC_REGEX = re.compile(r'd4:95:24(:[\da-f]{2}){3}')
 
@@ -78,6 +78,8 @@ LOGGER_NAME = CONFIG['Logger Info']['name']
 
 # Other constant global variables.
 DC_TICKETING = False
+LOG_LINE_BREAK = \
+    '------------------------------------------------------------------'
 
 
 # Represents a Clover payment device in Meraki.
@@ -176,8 +178,7 @@ class CloverSyncStatus(object):
 # Clover sync status object.
 def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         CloverSyncStatus:
-    global_logger.info(
-        '----------------------- Begin Meraki Report ----------------------')
+    global_logger.info(log_title('Begin Meraki Report'))
     global_logger.info('Retrieving Clover information from Meraki...')
 
     # Use the Meraki API to get a list of all the Clover (client)
@@ -199,9 +200,10 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
     # Iterate through each Clover device and update the status object
     # depending on the state of the Clover.
     for clover in meraki_clovers:
-        # Check if this device is a Clover device.
+        # Check if this device is a Clover device or the probe is unknown.
         if clover['manufacturer'] is None or \
-                'Clover' not in clover['manufacturer']:
+                'clover' not in clover['manufacturer'].lower() or \
+                clover['recentDeviceName'] is None:
             # Add this device to the unknown devices list.
             clover_sync_status.meraki_unknown_devices.append(clover)
             continue
@@ -234,9 +236,9 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         if clover['description'] is None:
             # Add this Clover to the invalid Meraki Clovers dictionary.
             missing_name_error = \
-                'Clover at site "' + clean_probe + '" with name "' + \
-                clover['mac'] + '" appears to have an invalid name ' \
-                '(the name is just the MAC address)'
+                f'Clover at site "{clean_probe}" with name "{clover["mac"]}" ' \
+                f'appears to have an invalid name ' \
+                f'(the name is just the MAC address)'
             new_unnamed_clover = MerakiClover(
                 meraki_id=clover['id'],
                 name=clover['mac'],
@@ -253,9 +255,9 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         if not MERAKI_NAME_REGEX.match(clover['description']):
             # Add this Clover to the invalid Meraki Clovers dictionary.
             invalid_name_error = \
-                'Clover at site "' + clean_probe + '" with name "' + \
-                clover['description'] + '" appears to have an invalid name ' \
-                '(the name format is invalid)'
+                f'Clover at site "{clean_probe}" with name ' \
+                f'"{clover["description"]}" appears to have an invalid name ' \
+                f'(the name format is invalid)'
             new_invalid_clover = MerakiClover(
                 meraki_id=clover['id'],
                 name=clover['description'],
@@ -276,10 +278,10 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         if clover['description'][-17:] != clover['mac']:
             # Add this Clover to the invalid Meraki Clovers dictionary.
             invalid_mac_error = \
-                'Clover at site "' + clean_probe + '" with name "' + \
-                clover['description'] + '" appears to have an invalid name ' \
-                '(the MAC address in the name does not match the ' \
-                'Clover''s true MAC address)'
+                f'Clover at site "{clean_probe}" with name ' \
+                f'"{clover["description"]}" appears to have an invalid name ' \
+                f'(the MAC address in the name does not match the ' \
+                f'Clover''s true MAC address)'
             new_invalid_clover = MerakiClover(
                 meraki_id=clover['id'],
                 name=clover['description'],
@@ -306,64 +308,50 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         clover_sync_status.meraki_clovers[clover['mac']] = new_meraki_clover
 
     global_logger.info('Clover information retrieved from Meraki!')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Begin the report for the Meraki Clover device retrieval.
     # Report unknown devices.
     unknown_devices_count = len(clover_sync_status.meraki_unknown_devices)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Unknown devices found (' +
-                       str(unknown_devices_count) + ') -------------------')
+    global_logger.info(
+        log_title(f'Unknown devices found ({unknown_devices_count})'))
     for unknown_device in sorted(clover_sync_status.meraki_unknown_devices,
                                  key=lambda device:
-                                 str(device['recentDeviceName']) + ' ' +
-                                 str(device['description'])):
-        global_logger.warning('    ' +
-                              str(unknown_device['recentDeviceName']) +
-                              ' ' + str(unknown_device['description']))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                 f'{device["recentDeviceName"]} '
+                                 f'{device["description"]}'):
+        global_logger.warning(f'    {unknown_device["recentDeviceName"]} '
+                              f'{unknown_device["description"]}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report offline devices.
     offline_devices_count = len(clover_sync_status.meraki_offline_clovers)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Offline devices found (' +
-                       str(offline_devices_count) + ') -------------------')
+    global_logger.info(
+        log_title(f'Offline devices found ({offline_devices_count})'))
     for offline_device in sorted(clover_sync_status.
                                  meraki_offline_clovers.values(),
-                                 key=lambda device: str(device.site) + ' ' +
-                                 str(device.name)):
-        global_logger.info('    ' + str(offline_device.site) + ' ' +
-                           str(offline_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                 key=lambda device: f'{device.site} '
+                                                    f'{device.name}'):
+        global_logger.info(f'    {offline_device.site} {offline_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report invalid devices.
     invalid_device_count = len(clover_sync_status.meraki_invalid_clovers)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Invalid devices found (' +
-                       str(invalid_device_count) + ') -------------------')
+    global_logger.info(
+        log_title(f'Invalid devices found ({invalid_device_count})'))
     for invalid_device in sorted(clover_sync_status.
                                  meraki_invalid_clovers.values(),
-                                 key=lambda device: str(device.site) + ' ' +
-                                 str(device.name)):
-        global_logger.warning('    ' + str(invalid_device.site) + ' ' +
-                              str(invalid_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                 key=lambda device: f'{device.site} '
+                                                    f'{device.name}'):
+        global_logger.warning(f'    {invalid_device.site} '
+                              f'{invalid_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report the total Clover device count from Meraki.
-    global_logger.info(' ')
-    global_logger.info(
-        '------------------------ End Meraki Report -----------------------')
+    global_logger.info(log_title('End Meraki Report'))
     total_devices_count = invalid_device_count + \
         len(clover_sync_status.meraki_clovers)
-    global_logger.info('Total Online Clovers in Meraki: ' +
-                       str(total_devices_count))
-    global_logger.info(
-        '------------------------------------------------------------------')
-    global_logger.info(' ')
+    global_logger.info(f'Total Online Clovers in Meraki: {total_devices_count}')
+    global_logger.info(LOG_LINE_BREAK)
 
     return clover_sync_status
 
@@ -372,8 +360,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
 # object to record the status of the Clovers in PRTG. Return the updated
 # Clover sync status object.
 def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
-    global_logger.info(
-        '------------------------ Begin PRTG Report -----------------------')
+    global_logger.info(log_title('Begin PRTG Report'))
     global_logger.info('Retrieving Clover information from PRTG...')
 
     # Retrieve the MAC address sensor values and convert the response to JSON.
@@ -398,8 +385,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if 'ready' in mac_sensor['probe'].lower():
             continue
 
-        # Get the PRTG ID of the related device
-        prtg_id = str(mac_sensor['parentid'])
+        # Get the PRTG ID of the related device.
+        prtg_id = f'{mac_sensor["parentid"]}'
 
         # Check if the sensor is not online.
         if mac_sensor['status_raw'] != 3:
@@ -443,7 +430,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             continue
 
         # Get the PRTG ID of the relevant device.
-        prtg_id = str(sn_sensor['parentid'])
+        prtg_id = f'{sn_sensor["parentid"]}'
 
         # Check if the sensor is not online.
         if sn_sensor['status_raw'] != 3:
@@ -479,7 +466,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     for clover in prtg_clovers_json['devices']:
         # Get the PRTG ID, clean up the probe name, and try to get a valid
         # Clover MAC address from the name of the device.
-        prtg_id = str(clover['objid'])
+        prtg_id = f'{clover["objid"]}'
         clean_probe = re.sub(SITE_INFO_REGEX, '', clover['probe'])
         name_mac_address = get_clover_mac(clover['name'])
 
@@ -526,9 +513,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
             # Add this Clover to the dc MACS PRTG Clover dictionary. We will
             # use the MAC address from the name to identify this PRTG Clover.
-            dc_mac_error = \
-                'Clover with name "' + clover['name'] + '" has its MAC ' \
-                'sensor returning a "dc" MAC address'
+            dc_mac_error = f'Clover with name "{clover["name"]}" has its MAC ' \
+                           f'sensor returning a "dc" MAC address'
             new_dc_mac_clover = PRTGClover(
                 prtg_id=prtg_id,
                 name=clover['name'],
@@ -548,9 +534,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             # Add this Clover to the unverified PRTG Clover dictionary. We
             # will use the MAC address from the name to identify this PRTG
             # Clover.
-            unverified_mac_error = \
-                'Clover MAC address with name "' + clover['name'] + \
-                '" could not be verified'
+            unverified_mac_error = f'Clover MAC address with name ' \
+                                   f'"{clover["name"]}" could not be verified'
             new_unverified_clover = PRTGClover(
                 prtg_id=prtg_id,
                 name=clover['name'],
@@ -568,8 +553,8 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if not PRTG_NAME_REGEX.match(clover['name']):
             # Add this Clover to the invalid PRTG Clovers dictionary.
             invalid_name_error = \
-                'Clover with name "' + clover['name'] + '" appears to ' \
-                'have an invalid name (the name format is invalid)'
+                f'Clover with name "{clover["name"]}" appears to have an ' \
+                f'invalid name (the name format is invalid)'
             new_invalid_clover = PRTGClover(
                 prtg_id=prtg_id,
                 name=clover['name'],
@@ -591,9 +576,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if mac_address not in clover['name']:
             # Add this Clover to the invalid PRTG Clovers dictionary.
             invalid_mac_error = \
-                'Clover with name "' + clover['name'] + '" appears to ' \
-                'have an invalid name (the MAC address in the name does not ' \
-                'match the Clover''s true MAC address)'
+                f'Clover with name "{clover["name"]}" appears to have an ' \
+                f'invalid name (the MAC address in the name does not match ' \
+                f'the Clover''s true MAC address)'
             new_invalid_clover = PRTGClover(
                 prtg_id=prtg_id,
                 name=clover['name'],
@@ -612,10 +597,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if clean_probe not in clover['name']:
             # Add this Clover to the invalid PRTG Clovers dictionary.
             invalid_site_error = \
-                'Clover at site "' + clean_probe + '" with name "' + \
-                clover['name'] + '" appears to have an invalid name ' \
-                '(the site in the name does not match the Clover''s ' \
-                'probe name)'
+                f'Clover at site "{clean_probe}" with name ' \
+                f'"{clover["name"]}" appears to have an invalid name (the ' \
+                f'site in the name does not match the Clover''s probe name)'
             new_invalid_clover = PRTGClover(
                 prtg_id=prtg_id,
                 name=clover['name'],
@@ -644,80 +628,62 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         clover_sync_status.prtg_clovers[mac_address] = new_prtg_clover
 
     global_logger.info('Clover information retrieved from PRTG!')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Begin the report for the PRTG Clover device retrieval.
     # Report unknown devices.
     unknown_devices_count = len(clover_sync_status.prtg_unknown_clovers)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Unknown devices found (' +
-                       str(unknown_devices_count) + ') -------------------')
-    for unknown_device in sorted(clover_sync_status.prtg_unknown_clovers,
-                                 key=lambda device: str(device['name'])):
-        global_logger.warning('    ' + str(unknown_device['name']))
     global_logger.info(
-        '------------------------------------------------------------------')
+        log_title(f'Unknown devices found ({unknown_devices_count})'))
+    for unknown_device in sorted(clover_sync_status.prtg_unknown_clovers,
+                                 key=lambda device: f'{device["name"]}'):
+        global_logger.warning(f'    {unknown_device["name"]}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report offline devices.
     offline_devices_count = len(clover_sync_status.prtg_offline_clovers)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Offline devices found (' +
-                       str(offline_devices_count) + ') -------------------')
+    global_logger.info(
+        log_title(f'Offline devices found ({offline_devices_count})'))
     for offline_device in sorted(clover_sync_status.
                                  prtg_offline_clovers.values(),
-                                 key=lambda device: str(device.name)):
-        global_logger.info('    ' + str(offline_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                 key=lambda device: f'{device.name}'):
+        global_logger.info(f'    {offline_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report 'dc' MAC address sensor devices.
     dc_mac_devices_count = len(clover_sync_status.prtg_dc_macs)
-    global_logger.info(' ')
-    global_logger.info('--------------- "dc" MAC addresses found (' +
-                       str(dc_mac_devices_count) + ') ---------------')
+    global_logger.info(f'"dc" MAC addresses found ({dc_mac_devices_count})')
     for dc_mac_device in sorted(clover_sync_status.prtg_dc_macs.values(),
-                                key=lambda device: str(device.name)):
-        global_logger.warning('    ' + str(dc_mac_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                key=lambda device: f'{device.name}'):
+        global_logger.warning(f'    {dc_mac_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report unverified PRTG Clover device MAC addresses.
     unverified_devices_count = len(clover_sync_status.prtg_unverified_macs)
-    global_logger.info(' ')
-    global_logger.info('------------------ Unverified devices found (' +
-                       str(unverified_devices_count) + ') ------------------')
+    global_logger.info(f'Unverified devices found ({unverified_devices_count})')
     for unverified_device in sorted(clover_sync_status.
                                     prtg_unverified_macs.values(),
-                                    key=lambda device: str(device.name)):
-        global_logger.warning('    ' + str(unverified_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                    key=lambda device: f'{device.name}'):
+        global_logger.warning(f'    {unverified_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report invalid devices.
     invalid_device_count = len(clover_sync_status.prtg_invalid_clovers)
-    global_logger.info(' ')
-    global_logger.info('-------------------- Invalid devices found (' +
-                       str(invalid_device_count) + ') -------------------')
+    global_logger.info(
+        log_title(f'Invalid devices found ({invalid_device_count})'))
     for invalid_device in sorted(clover_sync_status.
                                  prtg_invalid_clovers.values(),
-                                 key=lambda device: str(device.name)):
-        global_logger.warning('    ' + str(invalid_device.name))
-    global_logger.info(
-        '------------------------------------------------------------------')
+                                 key=lambda device: f'{device.name}'):
+        global_logger.warning(f'    {invalid_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Report the total Clover device count from PRTG.
-    global_logger.info(' ')
-    global_logger.info(
-        '------------------------- End PRTG Report ------------------------')
+    global_logger.info(log_title('End PRTG Report'))
     total_devices_count = invalid_device_count + \
         len(clover_sync_status.prtg_clovers) + \
         len(clover_sync_status.prtg_unverified_macs)
-    global_logger.info('Total Online Clovers in PRTG: ' +
-                       str(total_devices_count))
-    global_logger.info(
-        '------------------------------------------------------------------')
-    global_logger.info(' ')
+    global_logger.info(f'Total Online Clovers in PRTG: {total_devices_count}')
+    global_logger.info(LOG_LINE_BREAK)
 
     return clover_sync_status
 
@@ -727,11 +693,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 # sync status object with the analysis.
 def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Print the beginning of the Clover analysis.
-    global_logger.info(
-        '---------------------- Begin Clover Analysis ---------------------')
+    global_logger.info(log_title('Begin Clover Analysis'))
     global_logger.info('Analyzing valid Clovers between Meraki and PRTG...')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Make references to the valid Meraki / PRTG Clover dictionaries.
     all_meraki_clovers = clover_sync_status.meraki_clovers
@@ -740,8 +704,8 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Go through each valid Meraki Clover and try to find the matching
     # Clover in the PRTG Clovers dictionary.
     for meraki_clover in sorted(all_meraki_clovers.values(),
-                                key=lambda device: str(device.site) + ' ' +
-                                str(device.name)):
+                                key=lambda device: f'{device.site} '
+                                                   f'{device.name}'):
         clover_mac = meraki_clover.mac_address
 
         # Check if the MAC address is not found in the PRTG Clovers dictionary.
@@ -821,14 +785,13 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         # Check if these Clovers do not have the same site.
         if meraki_clover.site != prtg_clover.site:
             # Add these Clovers to the mismatch dictionary.
-            global_logger.warning('    Site mismatch detected for ' +
-                                  prtg_clover.name + ' | Meraki: ' +
-                                  meraki_clover.site + ' | PRTG: ' +
-                                  prtg_clover.site)
-            site_error = \
-                'Clover with name "' + prtg_clover.name + \
-                '" has sites that do not match | Meraki: ' + \
-                meraki_clover.site + ' | PRTG: ' + prtg_clover.site
+            global_logger.warning(f'    Site mismatch detected for '
+                                  f'{prtg_clover.name} | '
+                                  f'Meraki: {meraki_clover.site} | '
+                                  f'PRTG: {prtg_clover.site}')
+            site_error = f'Clover with name "{prtg_clover.name}" has sites ' \
+                         f'that do not match | Meraki: {meraki_clover.site}' \
+                         f' | PRTG: {prtg_clover.site}'
             new_mismatched_pair = \
                 CloverPair(
                     meraki_clover=meraki_clover,
@@ -843,15 +806,14 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if meraki_clover.window_number != prtg_clover.window_number:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
-            global_logger.warning('    Window # mismatch detected for ' +
-                                  prtg_clover.name + ' | Meraki: ' +
-                                  meraki_clover.window_number + ' | PRTG: ' +
-                                  prtg_clover.window_number)
-            window_error = \
-                'Clover with name "' + prtg_clover.name + \
-                '" has window numbers that do not match | Meraki: ' + \
-                meraki_clover.window_number + ' | PRTG: ' + \
-                prtg_clover.window_number
+            global_logger.warning(f'    Window # mismatch detected for ' +
+                                  f'{prtg_clover.name} | '
+                                  f'Meraki: {meraki_clover.window_number} | '
+                                  f'PRTG: {prtg_clover.window_number}')
+            window_error = f'Clover with name "{prtg_clover.name}" ' \
+                           f'has window numbers that do not match | ' \
+                           f'Meraki: {meraki_clover.window_number} | ' \
+                           f'PRTG: {prtg_clover.window_number}'
             new_mismatched_pair = \
                 CloverPair(
                     meraki_clover=meraki_clover,
@@ -866,14 +828,14 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         if meraki_clover.ip_address != prtg_clover.ip_address:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
-            global_logger.warning('    IPv4 address mismatch detected for ' +
-                                  prtg_clover.name + ' | Meraki: ' +
-                                  meraki_clover.ip_address + ' | PRTG: ' +
-                                  prtg_clover.ip_address)
-            ip_error = \
-                'Clover with name "' + prtg_clover.name + \
-                '" has IPv4 addresses that do not match | Meraki: ' + \
-                meraki_clover.ip_address + ' | PRTG: ' + prtg_clover.ip_address
+            global_logger.warning(f'    IPv4 address mismatch detected for '
+                                  f'{prtg_clover.name} | '
+                                  f'Meraki: {meraki_clover.ip_address} | '
+                                  f'PRTG: {prtg_clover.ip_address}')
+            ip_error = f'Clover with name "{prtg_clover.name}" has IPv4 ' \
+                       f'addresses that do not match | ' \
+                       f'Meraki: {meraki_clover.ip_address} | ' \
+                       f'PRTG: {prtg_clover.ip_address}'
             new_mismatched_pair = \
                 CloverPair(
                     meraki_clover=meraki_clover,
@@ -893,8 +855,7 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             )
         clover_sync_status.clover_matches[clover_mac] = new_matching_pair
 
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Remove matched Clovers from the valid Meraki / PRTG dictionaries.
     for clover_mac in clover_sync_status.clover_matches.keys():
@@ -954,48 +915,38 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Add an exclusive error to the remaining valid Meraki Clovers.
     for excl_meraki in clover_sync_status.meraki_clovers.values():
-        excl_meraki.error = \
-            'Clover at site "' + excl_meraki.site + '" with name "' + \
-            excl_meraki.name + '" is exclusively in Meraki and NOT in PRTG'
+        excl_meraki.error = f'Clover at site "{excl_meraki.site}" with name ' \
+                            f'"{excl_meraki.name}" is exclusively in Meraki ' \
+                            f'and NOT in PRTG'
 
     # Add an exclusive error to the remaining valid PRTG Clovers.
     for excl_prtg in clover_sync_status.prtg_clovers.values():
-        excl_prtg.error = \
-            'Clover at site "' + excl_prtg.site + '" with name "' + \
-            excl_prtg.name + '" is exclusively in PRTG and NOT in Meraki'
+        excl_prtg.error = f'Clover at site "{excl_prtg.site}" with name ' \
+                          f'"{excl_prtg.name}" is exclusively in PRTG and ' \
+                          f'NOT in Meraki'
 
     # Print all the Clovers exclusively in Meraki.
     exclusive_meraki_count = len(all_meraki_clovers)
-    global_logger.info(' ')
-    global_logger.info('----------------- Exclusive Meraki Clovers (' +
-                       str(exclusive_meraki_count) + ') ------------------')
-    for clover in sorted(all_meraki_clovers.values(),
-                         key=lambda device: str(device.site) + ' ' +
-                         str(device.name)):
-        global_logger.warning('    ' + str(clover.site) + ' ' +
-                              str(clover.name))
     global_logger.info(
-        '------------------------------------------------------------------')
+        log_title(f'Exclusive Meraki Clover ({exclusive_meraki_count})'))
+    for clover in sorted(all_meraki_clovers.values(),
+                         key=lambda device: f'{device.site} {device.name}'):
+        global_logger.warning(f'    {clover.site} {clover.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Print all the Clovers exclusively in PRTG.
     exclusive_prtg_count = len(all_prtg_clovers)
-    global_logger.info(' ')
-    global_logger.info('------------------- Exclusive PRTG Clovers (' +
-                       str(exclusive_prtg_count) + ') ------------------')
-    for clover in sorted(all_prtg_clovers.values(),
-                         key=lambda device: str(device.name)):
-        global_logger.warning('    ' + str(clover.name))
     global_logger.info(
-        '------------------------------------------------------------------')
+        log_title(f'Exclusive PRTG Clovers ({exclusive_prtg_count})'))
+    for clover in sorted(all_prtg_clovers.values(),
+                         key=lambda device: f'{device.name}'):
+        global_logger.warning(f'    {clover.name}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Print that we've ended the Clover analysis.
-    global_logger.info(' ')
-    global_logger.info(
-        '----------------------- End Clover Analysis ----------------------')
+    global_logger.info(log_title('End Clover Analysis'))
     global_logger.info('Valid Clovers analyzed!')
-    global_logger.info(
-        '------------------------------------------------------------------')
-    global_logger.info(' ')
+    global_logger.info(LOG_LINE_BREAK)
 
     return clover_sync_status
 
@@ -1004,11 +955,9 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 # PRTG to ServiceNow.
 def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Print that we are beginning the ServiceNow sync for valid Clovers.
-    global_logger.info(
-        '---------------------- Begin ServiceNow Sync ---------------------')
+    global_logger.info(log_title('Begin ServiceNow Sync'))
     global_logger.info('Synchronizing valid Clovers to ServiceNow...')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Get all Clovers in ServiceNow from the tablet table.
     snow_clover_table = SNOW_CLIENT.resource(api_path=SNOW_CMDB_PATH)
@@ -1098,7 +1047,7 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             snow_update['ip_address'] = prtg_clover.ip_address
 
         # Check if the serial number is incorrect in SNow.
-        if CLOVER_SN_SHORT_REGEX.match(str(prtg_clover.serial_number)) and \
+        if CLOVER_SN_SHORT_REGEX.match(f'{prtg_clover.serial_number}') and \
                 snow_clover['serial_number'] != prtg_clover.serial_number:
             snow_update['serial_number'] = prtg_clover.serial_number
 
@@ -1113,8 +1062,8 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         # Check if we need to update SNow.
         if snow_update:
             try:
-                global_logger.info('Syncing ' + snow_clover['name'] +
-                                   ' to ServiceNow...')
+                global_logger.info(f'Syncing {snow_clover["name"]} to '
+                                   f'ServiceNow...')
                 snow_clover_table.update(
                     query={
                         'sys_id': snow_clover['sys_id']
@@ -1125,38 +1074,30 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 time.sleep(1)
                 update_count += 1
             except pysnow.exceptions as e:
-                global_logger.error('An error occurred when trying to sync '
-                                    'Clover to ServiceNow: ' +
-                                    snow_clover['name'])
-                global_logger.error('    ' + str(e))
+                global_logger.error(f'An error occurred when trying to sync '
+                                    f'Clover to ServiceNow: '
+                                    f'{snow_clover["name"]}')
+                global_logger.error(f'    {e}')
 
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
     global_logger.info('Valid Clovers synchronized to ServiceNow!')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Print all the lost ServiceNow Clovers.
     lost_clover_count = len(curr_clover_sync_status.snow_lost_clovers)
-    global_logger.info(' ')
-    global_logger.info('------------------ Lost ServiceNow Clovers (' +
-                       str(lost_clover_count) + ') ------------------')
-    for clover in sorted(curr_clover_sync_status.snow_lost_clovers,
-                         key=lambda device: str(device['name'])):
-        global_logger.warning('    ' + str(clover['name']))
     global_logger.info(
-        '------------------------------------------------------------------')
+        log_title(f'Lost ServiceNow Clover ({lost_clover_count})'))
+    for clover in sorted(curr_clover_sync_status.snow_lost_clovers,
+                         key=lambda device: f'{device["name"]}'):
+        global_logger.warning(f'    {clover["name"]}')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Print how many Clovers were synced in ServiceNow.
-    global_logger.info(' ')
-    global_logger.info(
-        '----------------------- End ServiceNow Sync ----------------------')
+    global_logger.info(log_title('End ServiceNow Sync'))
     global_logger.info('Valid Clovers have been synchronized to ServiceNow!')
-    global_logger.info(str(update_count) + ' / ' + str(len(snow_clovers)) +
-                       ' Clovers updated in ServiceNow')
-    global_logger.info(
-        '------------------------------------------------------------------')
-    global_logger.info(' ')
+    global_logger.info(f'{update_count} / {len(snow_clovers)} '
+                       f'Clovers updated in ServiceNow')
+    global_logger.info(LOG_LINE_BREAK)
 
     return clover_sync_status
 
@@ -1173,11 +1114,9 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
     existing_sync_ritms = dict()
     total_tickets = 0
 
-    global_logger.info(
-        '---------------- Begin ServiceNow Ticket Creation ----------------')
+    global_logger.info(log_title('Begin ServiceNow Ticket Creation'))
     global_logger.info('Creating ServiceNow tickets...')
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
 
     # Get all Clover sync incident tickets from ServiceNow.
     snow_incidents_resp = snow_incident_table.get(
@@ -1216,32 +1155,32 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                 continue
 
             # Create the payload to make a new INC ticket in ServiceNow.
-            global_logger.warning(
-                'Opening INC for Clover ' + dc_mac_clover.name + ' because '
-                'this Clover''s MAC address sensor is returning a "dc" MAC '
-                'address')
+            global_logger.warning(f'Opening INC for Clover '
+                                  f'{dc_mac_clover.name} because this '
+                                  f'Clover''s MAC address sensor is '
+                                  f'returning a "dc" MAC address')
             ticket_payload = \
                 make_incident_payload(dc_mac_clover, AffectedPlatform.PRTG)
 
             # Check if the payload creation was unsuccessful.
             if not ticket_payload:
-                global_logger.error(
-                    'An error occurred when trying to make a new INC in '
-                    'ServiceNow for Clover ' + dc_mac_clover.name)
+                global_logger.error(f'An error occurred when trying to make '
+                                    f'a new INC in ServiceNow for Clover '
+                                    f'{dc_mac_clover.name}')
                 continue
 
             # Try to make a new incident for this exclusive Meraki Clover.
             try:
                 snow_incident_table.create(payload=ticket_payload)
-                global_logger.info('Successfully created the INC for Clover ' +
-                                   dc_mac_clover.name + '!')
+                global_logger.info(f'Successfully created the INC for Clover '
+                                   f'{dc_mac_clover.name}!')
                 time.sleep(1)
                 total_tickets += 1
             except pysnow.exceptions as e:
-                global_logger.error(
-                    'An error occurred when trying to make a new INC in '
-                    'ServiceNow for Clover ' + dc_mac_clover.name)
-                global_logger.error('Error: ' + str(e))
+                global_logger.error(f'An error occurred when trying to make '
+                                    f'a new INC in ServiceNow for Clover '
+                                    f'{dc_mac_clover.name}')
+                global_logger.error(f'Error: {e}')
 
     # Make a ticket for each exclusive Meraki Clover.
     for excl_clover in clover_sync_status.meraki_clovers.values():
@@ -1251,32 +1190,32 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             continue
 
         # Create the payload to make a new INC in ServiceNow.
-        global_logger.warning('Opening INC at site ' + excl_clover.site +
-                              ' for Clover ' + excl_clover.name +
-                              ' because this Clover is exclusively in Meraki' +
-                              ' and NOT in PRTG')
+        global_logger.warning(f'Opening INC at site {excl_clover.site} for '
+                              f'Clover {excl_clover.name} because this '
+                              f'Clover is exclusively in Meraki and NOT in '
+                              f'PRTG')
         ticket_payload = \
             make_incident_payload(excl_clover, AffectedPlatform.MERAKI)
 
         # Check if the payload creation was unsuccessful.
         if not ticket_payload:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                excl_clover.site + ' ' + excl_clover.name)
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover '
+                                f'{excl_clover.site} {excl_clover.name}')
             continue
 
         # Try to make a new incident for this exclusive Meraki Clover.
         try:
             snow_incident_table.create(payload=ticket_payload)
-            global_logger.info('Successfully created the INC for Clover ' +
-                               excl_clover.site + ' ' + excl_clover.name + '!')
+            global_logger.info(f'Successfully created the INC for Clover ' +
+                               f'{excl_clover.site} {excl_clover.name}!')
             time.sleep(1)
             total_tickets += 1
         except pysnow.exceptions as e:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                excl_clover.site + ' ' + excl_clover.name)
-            global_logger.error('Error: ' + str(e))
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover '
+                                f'{excl_clover.site} {excl_clover.name}')
+            global_logger.error(f'Error: {e}')
 
     # Make a ticket for each exclusive PRTG Clover.
     for excl_clover in clover_sync_status.prtg_clovers.values():
@@ -1286,31 +1225,31 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             continue
 
         # Create the payload to make a new INC in ServiceNow.
-        global_logger.warning('Opening INC for Clover ' + excl_clover.name +
-                              ' because this Clover is exclusively in PRTG '
-                              'and NOT in Meraki')
+        global_logger.warning(f'Opening INC for Clover {excl_clover.name} '
+                              f'because this Clover is exclusively in PRTG and '
+                              f'NOT in Meraki')
         ticket_payload = \
             make_incident_payload(excl_clover, AffectedPlatform.PRTG)
 
         # Check if the payload creation was unsuccessful.
         if not ticket_payload:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                excl_clover.name)
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover '
+                                f'{excl_clover.name}')
             continue
 
         # Try to make a new incident for this exclusive PRTG Clover.
         try:
             snow_incident_table.create(payload=ticket_payload)
-            global_logger.info('Successfully created the INC for Clover ' +
-                               excl_clover.name + '!')
+            global_logger.info(f'Successfully created the INC for Clover ' +
+                               f'{excl_clover.name}!')
             time.sleep(1)
             total_tickets += 1
         except pysnow.exceptions as e:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                excl_clover.name)
-            global_logger.error('Error: ' + str(e))
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover ' +
+                                f'{excl_clover.name}')
+            global_logger.error(f'Error: {e}')
 
     # Make a ticket for each mismatched Clover.
     for mm_clover_pair in clover_sync_status.clover_mismatches.values():
@@ -1322,31 +1261,31 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             continue
 
         # Create the payload to make a new INC in ServiceNow.
-        global_logger.warning('Opening INC for Clover ' +
-                              mm_clover_pair.prtg_clover.name + ' because ' +
-                              mm_clover_pair.mismatch_error)
+        global_logger.warning(f'Opening INC for Clover ' +
+                              f'{mm_clover_pair.prtg_clover.name} because ' +
+                              f'{mm_clover_pair.mismatch_error}')
         ticket_payload = \
             make_incident_payload(mm_clover_pair, AffectedPlatform.ALL)
 
         # Check if the payload creation was unsuccessful.
         if not ticket_payload:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                mm_clover_pair.prtg_clover.name)
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover ' +
+                                f'{mm_clover_pair.prtg_clover.name}')
             continue
 
         # Try to make a new incident for this mismatched Clover.
         try:
             snow_incident_table.create(payload=ticket_payload)
-            global_logger.info('Successfully created the INC for Clover ' +
-                               mm_clover_pair.prtg_clover.name + '!')
+            global_logger.info(f'Successfully created the INC for Clover ' +
+                               f'{mm_clover_pair.prtg_clover.name}!')
             time.sleep(1)
             total_tickets += 1
         except pysnow.exceptions as e:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for Clover ' +
-                                mm_clover_pair.prtg_clover.name)
-            global_logger.error('Error: ' + str(e))
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for Clover ' +
+                                f'{mm_clover_pair.prtg_clover.name}')
+            global_logger.error(f'Error: {e}')
 
     # Make a ticket for each lost Clover found in ServiceNow.
     for lost_clover in clover_sync_status.snow_lost_clovers:
@@ -1356,15 +1295,15 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             continue
 
         # Create the payload to make a new INC in ServiceNow.
-        global_logger.warning('Opening INC for ' + lost_clover['name'] + ' ' +
-                              'because I could not find it in Meraki nor PRTG')
+        global_logger.warning(f'Opening INC for {lost_clover["name"]} because '
+                              f'I could not find it in Meraki nor PRTG')
         ticket_payload = {
             'short_description':
-                '[SNow] Vitu Clover Sync issue for ' + lost_clover['name'] +
-                ' ' + lost_clover['mac_address'],
+                f'[SNow] Vitu Clover Sync issue for {lost_clover["name"]} '
+                f'{lost_clover["mac_address"]}',
             'description':
-                'Lost Clover found in ServiceNow - ' + lost_clover['name'] +
-                ' could not be found in Meraki nor PRTG',
+                f'Lost Clover found in ServiceNow - {lost_clover["name"]} '
+                f'could not be found in Meraki nor PRTG',
             'caller_id': 'Cody Harper',
             'assignment_group': 'Expert Services Level One Team',
             'company': 'Vitu',
@@ -1378,14 +1317,14 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         # Try to make a new incident for this lost Clover.
         try:
             snow_incident_table.create(payload=ticket_payload)
-            global_logger.info('Successfully created the INC for ' +
-                               lost_clover['name'] + '!')
+            global_logger.info(f'Successfully created the INC for '
+                               f'{lost_clover["name"]}!')
             time.sleep(1)
             total_tickets += 1
         except pysnow.exceptions as e:
-            global_logger.error('An error occurred when trying to make a new '
-                                'INC in ServiceNow for ' + lost_clover['name'])
-            global_logger.error('Error: ' + str(e))
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for {lost_clover["name"]}')
+            global_logger.error(f'Error: {e}')
 
     # Make an automated ticket for each invalid Meraki Clover.
     for invalid_meraki in clover_sync_status.meraki_invalid_clovers.values():
@@ -1397,14 +1336,14 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         # Attempt to fix the name.
         if invalid_meraki.window_number is not None:
             # Initialize quick reference to the new name.
-            new_name = 'Window ' + invalid_meraki.window_number + ' ' + \
-                       invalid_meraki.mac_address
+            new_name = f'Window {invalid_meraki.window_number} ' \
+                       f'{invalid_meraki.mac_address}'
 
             # Make a new automated RITM ticket in ServiceNow.
-            global_logger.warning('Opening automated RITM at site ' +
-                                  invalid_meraki.site + ' for Clover ' +
-                                  invalid_meraki.name + ' to change the name '
-                                  'to ' + new_name)
+            global_logger.warning(f'Opening automated RITM at site '
+                                  f'{invalid_meraki.site} for Clover '
+                                  f'{invalid_meraki.name} to change the name '
+                                  f'to {new_name}')
             automation_successful = make_automated_ticket(
                 AffectedPlatform.MERAKI, new_name, invalid_meraki)
 
@@ -1417,18 +1356,18 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             # Initialize quick references to the Clover and new name.
             prtg_clover = clover_sync_status.unsyncable_clovers[
                 invalid_meraki.mac_address].prtg_clover
-            new_name = 'Window ' + prtg_clover.window_number + ' ' + \
-                       invalid_meraki.mac_address
+            new_name = f'Window {prtg_clover.window_number} ' \
+                       f'{invalid_meraki.mac_address}'
 
             # Make sure the invalid Meraki object has the 'None' window number
             # updated from its corresponding PRTG Clover.
             invalid_meraki.window_number = prtg_clover.window_number
 
             # Make a new automated RITM ticket in ServiceNow.
-            global_logger.warning('Opening automated RITM at site ' +
-                                  invalid_meraki.site + ' for Clover ' +
-                                  invalid_meraki.name + ' to change the name '
-                                  'to ' + new_name)
+            global_logger.warning(f'Opening automated RITM at site '
+                                  f'{invalid_meraki.site} for Clover '
+                                  f'{invalid_meraki.name} to change the name '
+                                  f'to {new_name}')
             automation_successful = make_automated_ticket(
                 AffectedPlatform.MERAKI, new_name, invalid_meraki)
 
@@ -1439,20 +1378,19 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         else:
             # We don't have the window number for this Clover, so we cannot
             # automate a RITM.
-            global_logger.error('Error opening an automated RITM at site ' +
-                                invalid_meraki.site + ' for Clover ' +
-                                invalid_meraki.name +
-                                ' because I do not have the window number')
+            global_logger.error(f'Error opening an automated RITM at site '
+                                f'{invalid_meraki.site} for Clover '
+                                f'{invalid_meraki.name} because I do not have '
+                                f'the window number')
             ticket_payload = {
                 'short_description':
-                    '[Meraki] Vitu Clover Sync issue at ' +
-                    invalid_meraki.site + ' for Clover ' +
-                    invalid_meraki.mac_address,
+                    f'[Meraki] Vitu Clover Sync issue at {invalid_meraki.site} '
+                    f'for Clover {invalid_meraki.mac_address}',
                 'description':
-                    'The Clover at site ' + invalid_meraki.site +
-                    ' with name ' + invalid_meraki.name + ' cannot be '
-                    'autonomously fixed because a window number was unable to'
-                    ' be determined - the Clover name must be fixed manually',
+                    f'The Clover at site {invalid_meraki.site} with name '
+                    f'{invalid_meraki.name} cannot be autonomously fixed '
+                    f'because a window number was unable to be determined - '
+                    f'the Clover name must be fixed manually',
                 'caller_id': 'Cody Harper',
                 'assignment_group': 'Expert Services Level One Team',
                 'company': 'Vitu',
@@ -1466,17 +1404,17 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             # Try to make a new incident for this invalid Clover.
             try:
                 snow_incident_table.create(payload=ticket_payload)
-                global_logger.info('Successfully created the INC for Clover '
-                                   + invalid_meraki.site + ' ' +
-                                   invalid_meraki.name + '!')
+                global_logger.info(f'Successfully created the INC for Clover '
+                                   f'{invalid_meraki.site} '
+                                   f'{invalid_meraki.name}!')
                 time.sleep(1)
                 total_tickets += 1
             except pysnow.exceptions as e:
-                global_logger.error('An error occurred when trying to make a '
-                                    'new INC in ServiceNow for Clover ' +
-                                    invalid_meraki.site + ' ' +
-                                    invalid_meraki.name)
-                global_logger.error('Error: ' + str(e))
+                global_logger.error(f'An error occurred when trying to make a '
+                                    f'new INC in ServiceNow for Clover '
+                                    f'{invalid_meraki.site} '
+                                    f'{invalid_meraki.name}')
+                global_logger.error(f'Error: {e}')
 
     # Make an automated ticket for each invalid PRTG Clover.
     for invalid_prtg in clover_sync_status.prtg_invalid_clovers.values():
@@ -1487,13 +1425,13 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
 
         # Attempt to fix the name.
         if invalid_prtg.window_number is not None:
-            new_name = '[' + invalid_prtg.site + '] Window ' + \
-                       invalid_prtg.window_number + ' ' + \
-                       invalid_prtg.mac_address
+            new_name = f'[{invalid_prtg.site}] Window ' \
+                       f'{invalid_prtg.window_number} ' \
+                       f'{invalid_prtg.mac_address}'
 
-            global_logger.warning('Opening automated RITM for ' +
-                                  invalid_prtg.name + ' to change the name '
-                                  'to ' + new_name)
+            global_logger.warning(f'Opening automated RITM for '
+                                  f'{invalid_prtg.name} to change the name to '
+                                  f'{new_name}')
             automation_successful = make_automated_ticket(
                 AffectedPlatform.PRTG, new_name, invalid_prtg)
 
@@ -1506,17 +1444,17 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             # Initialize quick references to the Clover and new name.
             meraki_clover = clover_sync_status.unsyncable_clovers[
                 invalid_prtg.mac_address].meraki_clover
-            new_name = '[' + meraki_clover.site + '] Window ' + \
-                       meraki_clover.window_number + ' ' + \
-                       invalid_prtg.mac_address
+            new_name = f'[{meraki_clover.site}] Window ' \
+                       f'{meraki_clover.window_number} ' \
+                       f'{invalid_prtg.mac_address}'
 
             # Make sure the invalid PRTG object has the 'None' window number
             # updated from its corresponding Meraki Clover.
             invalid_prtg.window_number = meraki_clover.window_number
 
-            global_logger.warning('Opening automated RITM for ' +
-                                  invalid_prtg.name + ' to change the name '
-                                  'to ' + new_name)
+            global_logger.warning(f'Opening automated RITM for '
+                                  f'{invalid_prtg.name} to change the name to '
+                                  f'{new_name}')
             automation_successful = make_automated_ticket(
                 AffectedPlatform.PRTG, new_name, invalid_prtg)
 
@@ -1525,18 +1463,17 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
                 time.sleep(1)
                 total_tickets += 1
         else:
-            global_logger.error('Error opening automated RITM for Clover ' +
-                                invalid_prtg.name +
-                                ' because I do not have the window number')
+            global_logger.error(f'Error opening automated RITM for Clover '
+                                f'{invalid_prtg.name} because I do not have '
+                                f'the window number')
             ticket_payload = {
                 'short_description':
-                    '[PRTG] Vitu Clover Sync issue at ' +
-                    invalid_prtg.site + ' for Clover ' +
-                    invalid_prtg.mac_address,
+                    f'[PRTG] Vitu Clover Sync issue at {invalid_prtg.site} for '
+                    f'Clover {invalid_prtg.mac_address}',
                 'description':
-                    'The Clover with name ' + invalid_prtg.name + ' cannot be '
-                    'autonomously fixed because a window number was unable to'
-                    ' be determined - the Clover name must be fixed manually',
+                    f'The Clover with name {invalid_prtg.name} cannot be '
+                    f'autonomously fixed because a window number was unable to '
+                    f'be determined - the Clover name must be fixed manually',
                 'caller_id': 'Cody Harper',
                 'assignment_group': 'Expert Services Level One Team',
                 'company': 'Vitu',
@@ -1550,26 +1487,21 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
             # Try to make a new incident for this invalid Clover.
             try:
                 snow_incident_table.create(payload=ticket_payload)
-                global_logger.info('Successfully created the INC for Clover '
-                                   + invalid_prtg.name + '!')
+                global_logger.info(f'Successfully created the INC for Clover '
+                                   f'{invalid_prtg.name}!')
                 time.sleep(1)
                 total_tickets += 1
             except pysnow.exceptions as e:
-                global_logger.error('An error occurred when trying to make a '
-                                    'new INC in ServiceNow for Clover ' +
-                                    invalid_prtg.name)
-                global_logger.error('Error: ' + str(e))
+                global_logger.error(f'An error occurred when trying to make a '
+                                    f'new INC in ServiceNow for Clover '
+                                    f'{invalid_prtg.name}')
+                global_logger.error(f'Error: {e}')
 
     # Print how many tickets were created in ServiceNow.
-    global_logger.info(
-        '------------------------------------------------------------------')
-    global_logger.info(' ')
-    global_logger.info(
-        '----------------- End ServiceNow Ticket Creation -----------------')
-    global_logger.info(
-        'Total ServiceNow tickets created: ' + str(total_tickets))
-    global_logger.info(
-        '------------------------------------------------------------------')
+    global_logger.info(LOG_LINE_BREAK)
+    global_logger.info(log_title('End ServiceNow Ticket Creation'))
+    global_logger.info(f'Total ServiceNow tickets created: {total_tickets}')
+    global_logger.info(LOG_LINE_BREAK)
 
 
 # Extracts the final 6 hex characters (including the 2 ':' separators) from a
@@ -1593,17 +1525,15 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> \
 
         ticket_payload = {
             'short_description':
-                '[PRTG] [Meraki] Vitu Clover Sync issue at ' +
-                prtg_clover.site + ' for Clover ' +
-                meraki_clover.mac_address,
+                f'[PRTG] [Meraki] Vitu Clover Sync issue at {prtg_clover.site} '
+                f'for Clover {meraki_clover.mac_address}',
             'description': clover_obj.mismatch_error,
             'caller_id': 'Cody Harper',
             'assignment_group': 'Expert Services Level One Team',
             'company': 'Vitu',
             'location': prtg_clover.site,
             'configuration_item':
-                prtg_clover.site + ' Clover Window' +
-                prtg_clover.window_number,
+                f'{prtg_clover.site} Clover Window{prtg_clover.window_number}',
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1613,17 +1543,15 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> \
             isinstance(clover_obj, PRTGClover):
         ticket_payload = {
             'short_description':
-                '[' + str(platform.value) + '] Vitu Clover Sync issue at ' +
-                clover_obj.site + ' for Clover ' +
-                clover_obj.mac_address,
+                f'[{platform.value}] Vitu Clover Sync issue at '
+                f'{clover_obj.site} for Clover {clover_obj.mac_address}',
             'description': clover_obj.error,
             'caller_id': 'Cody Harper',
             'assignment_group': 'Expert Services Level One Team',
             'company': 'Vitu',
             'location': clover_obj.site,
             'configuration_item':
-                clover_obj.site + ' Clover Window' +
-                clover_obj.window_number,
+                f'{clover_obj.site} Clover Window{clover_obj.window_number}',
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1647,8 +1575,8 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
         clover_id = clover.prtg_id
         clover_name = clover.name
     else:
-        global_logger.error('Cannot make an automated ticket with this '
-                            'object: ' + str(clover))
+        global_logger.error(f'Cannot make an automated ticket with this '
+                            f'object: {clover}')
         time.sleep(1)
         return False
 
@@ -1666,7 +1594,7 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
                     'sysparm_quantity': '1',
                     'variables':
                         {
-                            'affected_platform': str(platform.value),
+                            'affected_platform': f'{platform.value}',
                             'id': clover_id,
                             'Incorrect_Name': clover_name,
                             'corrected_name': new_name
@@ -1677,17 +1605,16 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
 
     # Check if the ticket creation was unsuccessful.
     if not 200 <= snow_req_resp.status_code <= 299:
-        global_logger.error('An error occurred when trying to make an '
-                            'automated RITM for Clover ' + clover_name +
-                            ' to change the name to ' + new_name)
-        global_logger.error('Reason: ' + snow_req_resp.reason)
+        global_logger.error(f'An error occurred when trying to make an '
+                            f'automated RITM for Clover {clover_name} to '
+                            f'change the name to {new_name}')
+        global_logger.error(f'Reason: {snow_req_resp.reason}')
         time.sleep(1)
         return False
 
     # Make a new short description for the request item ticket.
-    short_desc = '[' + str(platform.value) + '] Automated Vitu Clover Sync ' \
-                 'Request at ' + clover.site + ' for Clover ' + \
-                 clover.mac_address
+    short_desc = f'[{platform.value}] Automated Vitu Clover Sync Request at ' \
+                 f'{clover.site} for Clover {clover.mac_address}'
 
     # Extract the sys ID of the request from the response.
     snow_req_resp_json = snow_req_resp.json()
@@ -1708,7 +1635,7 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
             'company': 'Vitu',
             'location': clover.site,
             'configuration_item':
-                clover.site + ' Clover Window' + clover.window_number,
+                f'{clover.site} Clover Window{clover.window_number}',
             'u_milestone': 'Vitu Oct 2020 - Sept 2021',
             'category': 'Inquiry',
             'severity': '2 - Medium'
@@ -1717,15 +1644,14 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
 
     # Check if the edit was unsuccessful.
     if not updated_ritm:
-        global_logger.error('Error editing the short description for the '
-                            'automated RITM ' + ritm_sys_id + ' relating to '
-                            'Clover at site ' + clover.site + ' with name '
-                            + clover_name)
+        global_logger.error(f'Error editing the short description for the '
+                            f'automated RITM {ritm_sys_id} relating to Clover '
+                            f'at site {clover.site} with name {clover_name}')
         time.sleep(1)
         return False
 
-    global_logger.info('Automated RITM created successfully at site ' +
-                       clover.site + ' for Clover ' + clover_name)
+    global_logger.info(f'Automated RITM created successfully at site '
+                       f'{clover.site} for Clover {clover_name}')
     return True
 
 
@@ -1776,15 +1702,28 @@ def make_logger() -> logging.Logger:
     paper_trail_handle.setFormatter(
         logging.Formatter(LOGGER_NAME + ': %(message)s'))
 
+    # Initialize and configure the remote system handler for logging to
+    # fastvue.
+    fastvue_handle = SysLogHandler(address=('dev-syslog.quokka.ninja', 51514))
+    fastvue_handle.setLevel(logging.INFO)
+    fastvue_handle.setFormatter(
+        logging.Formatter(LOGGER_NAME + ': %(message)s'))
+
     # Initialize the global logger and add the standard out, file, and remote
     # handlers to it.
     logger = logging.getLogger(name=LOGGER_NAME)
     logger.addHandler(stdout_handle)
     logger.addHandler(log_file_handle)
     logger.addHandler(paper_trail_handle)
+    logger.addHandler(fastvue_handle)
     logger.setLevel(logging.INFO)
 
     return logger
+
+
+# Formats a string as a title to be inserted into the log.
+def log_title(title: str) -> str:
+    return '\n' + '{:-^66}'.format(f' {title} ')
 
 
 # Main method that runs the script. It has no input parameters.
@@ -1803,5 +1742,4 @@ if __name__ == '__main__':
     make_snow_tickets(curr_clover_sync_status)
 
     # End the sync operation.
-    global_logger.info(' ')
-    global_logger.info('Finished the sync')
+    global_logger.info(log_title('Finished the sync'))
