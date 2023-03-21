@@ -43,6 +43,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.1.1 - 2023/03/21
+    - Fixed various log appearance bugs
+    - Added library dependency for pysnow (python-magic-bin)
+
+
 -  version 2.1.0 - 2023/03/20
     - Fixed crash when a device in Meraki would have its "recentDeviceName" 
       be None

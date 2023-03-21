@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 __status__ = 'Released'
 
 
@@ -178,6 +178,7 @@ class CloverSyncStatus(object):
 # Clover sync status object.
 def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
         CloverSyncStatus:
+    global_logger.info('|')
     global_logger.info(log_title('Begin Meraki Report'))
     global_logger.info('Retrieving Clover information from Meraki...')
 
@@ -313,6 +314,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
     # Begin the report for the Meraki Clover device retrieval.
     # Report unknown devices.
     unknown_devices_count = len(clover_sync_status.meraki_unknown_devices)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Unknown devices found ({unknown_devices_count})'))
     for unknown_device in sorted(clover_sync_status.meraki_unknown_devices,
@@ -325,6 +327,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
 
     # Report offline devices.
     offline_devices_count = len(clover_sync_status.meraki_offline_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Offline devices found ({offline_devices_count})'))
     for offline_device in sorted(clover_sync_status.
@@ -336,6 +339,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
 
     # Report invalid devices.
     invalid_device_count = len(clover_sync_status.meraki_invalid_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Invalid devices found ({invalid_device_count})'))
     for invalid_device in sorted(clover_sync_status.
@@ -347,6 +351,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
     global_logger.info(LOG_LINE_BREAK)
 
     # Report the total Clover device count from Meraki.
+    global_logger.info('|')
     global_logger.info(log_title('End Meraki Report'))
     total_devices_count = invalid_device_count + \
         len(clover_sync_status.meraki_clovers)
@@ -360,6 +365,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
 # object to record the status of the Clovers in PRTG. Return the updated
 # Clover sync status object.
 def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
+    global_logger.info('|')
     global_logger.info(log_title('Begin PRTG Report'))
     global_logger.info('Retrieving Clover information from PRTG...')
 
@@ -633,6 +639,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Begin the report for the PRTG Clover device retrieval.
     # Report unknown devices.
     unknown_devices_count = len(clover_sync_status.prtg_unknown_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Unknown devices found ({unknown_devices_count})'))
     for unknown_device in sorted(clover_sync_status.prtg_unknown_clovers,
@@ -642,6 +649,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Report offline devices.
     offline_devices_count = len(clover_sync_status.prtg_offline_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Offline devices found ({offline_devices_count})'))
     for offline_device in sorted(clover_sync_status.
@@ -652,7 +660,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Report 'dc' MAC address sensor devices.
     dc_mac_devices_count = len(clover_sync_status.prtg_dc_macs)
-    global_logger.info(f'"dc" MAC addresses found ({dc_mac_devices_count})')
+    global_logger.info('|')
+    global_logger.info(
+        log_title(f'"dc" MAC addresses found ({dc_mac_devices_count})'))
     for dc_mac_device in sorted(clover_sync_status.prtg_dc_macs.values(),
                                 key=lambda device: f'{device.name}'):
         global_logger.warning(f'    {dc_mac_device.name}')
@@ -660,7 +670,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Report unverified PRTG Clover device MAC addresses.
     unverified_devices_count = len(clover_sync_status.prtg_unverified_macs)
-    global_logger.info(f'Unverified devices found ({unverified_devices_count})')
+    global_logger.info('|')
+    global_logger.info(
+        log_title(f'Unverified devices found ({unverified_devices_count})'))
     for unverified_device in sorted(clover_sync_status.
                                     prtg_unverified_macs.values(),
                                     key=lambda device: f'{device.name}'):
@@ -669,6 +681,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Report invalid devices.
     invalid_device_count = len(clover_sync_status.prtg_invalid_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Invalid devices found ({invalid_device_count})'))
     for invalid_device in sorted(clover_sync_status.
@@ -678,6 +691,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info(LOG_LINE_BREAK)
 
     # Report the total Clover device count from PRTG.
+    global_logger.info('|')
     global_logger.info(log_title('End PRTG Report'))
     total_devices_count = invalid_device_count + \
         len(clover_sync_status.prtg_clovers) + \
@@ -693,6 +707,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 # sync status object with the analysis.
 def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Print the beginning of the Clover analysis.
+    global_logger.info('|')
     global_logger.info(log_title('Begin Clover Analysis'))
     global_logger.info('Analyzing valid Clovers between Meraki and PRTG...')
     global_logger.info(LOG_LINE_BREAK)
@@ -927,8 +942,9 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Print all the Clovers exclusively in Meraki.
     exclusive_meraki_count = len(all_meraki_clovers)
+    global_logger.info('|')
     global_logger.info(
-        log_title(f'Exclusive Meraki Clover ({exclusive_meraki_count})'))
+        log_title(f'Exclusive Meraki Clovers ({exclusive_meraki_count})'))
     for clover in sorted(all_meraki_clovers.values(),
                          key=lambda device: f'{device.site} {device.name}'):
         global_logger.warning(f'    {clover.site} {clover.name}')
@@ -936,6 +952,7 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Print all the Clovers exclusively in PRTG.
     exclusive_prtg_count = len(all_prtg_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Exclusive PRTG Clovers ({exclusive_prtg_count})'))
     for clover in sorted(all_prtg_clovers.values(),
@@ -944,6 +961,7 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info(LOG_LINE_BREAK)
 
     # Print that we've ended the Clover analysis.
+    global_logger.info('|')
     global_logger.info(log_title('End Clover Analysis'))
     global_logger.info('Valid Clovers analyzed!')
     global_logger.info(LOG_LINE_BREAK)
@@ -955,6 +973,7 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 # PRTG to ServiceNow.
 def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     # Print that we are beginning the ServiceNow sync for valid Clovers.
+    global_logger.info('|')
     global_logger.info(log_title('Begin ServiceNow Sync'))
     global_logger.info('Synchronizing valid Clovers to ServiceNow...')
     global_logger.info(LOG_LINE_BREAK)
@@ -1085,6 +1104,7 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Print all the lost ServiceNow Clovers.
     lost_clover_count = len(curr_clover_sync_status.snow_lost_clovers)
+    global_logger.info('|')
     global_logger.info(
         log_title(f'Lost ServiceNow Clover ({lost_clover_count})'))
     for clover in sorted(curr_clover_sync_status.snow_lost_clovers,
@@ -1093,6 +1113,7 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     global_logger.info(LOG_LINE_BREAK)
 
     # Print how many Clovers were synced in ServiceNow.
+    global_logger.info('|')
     global_logger.info(log_title('End ServiceNow Sync'))
     global_logger.info('Valid Clovers have been synchronized to ServiceNow!')
     global_logger.info(f'{update_count} / {len(snow_clovers)} '
@@ -1114,6 +1135,7 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
     existing_sync_ritms = dict()
     total_tickets = 0
 
+    global_logger.info('|')
     global_logger.info(log_title('Begin ServiceNow Ticket Creation'))
     global_logger.info('Creating ServiceNow tickets...')
     global_logger.info(LOG_LINE_BREAK)
@@ -1499,6 +1521,7 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
 
     # Print how many tickets were created in ServiceNow.
     global_logger.info(LOG_LINE_BREAK)
+    global_logger.info('|')
     global_logger.info(log_title('End ServiceNow Ticket Creation'))
     global_logger.info(f'Total ServiceNow tickets created: {total_tickets}')
     global_logger.info(LOG_LINE_BREAK)
@@ -1706,8 +1729,7 @@ def make_logger() -> logging.Logger:
     # fastvue.
     fastvue_handle = SysLogHandler(address=('dev-syslog.quokka.ninja', 51514))
     fastvue_handle.setLevel(logging.INFO)
-    fastvue_handle.setFormatter(
-        logging.Formatter(LOGGER_NAME + ': %(message)s'))
+    fastvue_handle.setFormatter(stdout_file_format)
 
     # Initialize the global logger and add the standard out, file, and remote
     # handlers to it.
@@ -1723,13 +1745,15 @@ def make_logger() -> logging.Logger:
 
 # Formats a string as a title to be inserted into the log.
 def log_title(title: str) -> str:
-    return '\n' + '{:-^66}'.format(f' {title} ')
+    return '{:-^66}'.format(f' {title} ')
 
 
 # Main method that runs the script. It has no input parameters.
 if __name__ == '__main__':
     # Make the global logger for this script.
     global_logger = make_logger()
+    global_logger.info('|')
+    global_logger.info(log_title('Beginning the sync'))
 
     # Make the status object to keep track of relevant sync information.
     curr_clover_sync_status = CloverSyncStatus()
@@ -1742,4 +1766,6 @@ if __name__ == '__main__':
     make_snow_tickets(curr_clover_sync_status)
 
     # End the sync operation.
+    global_logger.info('|')
     global_logger.info(log_title('Finished the sync'))
+    global_logger.info('|')
