@@ -1683,7 +1683,7 @@ def make_automated_ticket(platform: AffectedPlatform, new_name: str,
 def get_window_number(clover_name: str) -> str | None:
     # Extract the window number from the Clover name.
     window_number = re.sub(EVERYTHING_BUT_WIND_NUM_REGEX, '',
-                           clover_name).strip()
+                           clover_name).replace('-', '').strip()
     return None if window_number == '' else window_number
 
 
