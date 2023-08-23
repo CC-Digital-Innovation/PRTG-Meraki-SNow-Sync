@@ -263,6 +263,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                 meraki_id=clover['id'],
                 name=clover['description'],
                 site=clean_probe,
+                window_number=get_window_number(clover['description']),
                 mac_address=clover['mac'],
                 ip_address=clover['ip'],
                 error=invalid_name_error
@@ -565,6 +566,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                 prtg_id=prtg_id,
                 name=clover['name'],
                 site=clean_probe,
+                window_number=get_window_number(clover['name']),
                 mac_address=mac_address,
                 ip_address=clover['host'],
                 serial_number=short_sn,
