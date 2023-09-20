@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.1.1'
+__version__ = '2.2.0'
 __status__ = 'Released'
 
 
@@ -153,6 +153,7 @@ class CloverSyncStatus(object):
     # Most keys to the dictionaries are the MAC address for the Clover.
     meraki_unknown_devices = list[dict]()
     meraki_offline_clovers = dict[str, MerakiClover]()
+    meraki_backup_clovers = dict[str, MerakiClover]()
     meraki_invalid_clovers = dict[str, MerakiClover]()
     meraki_clovers = dict[str, MerakiClover]()
     prtg_id_to_mac = dict[str, str]()  # Keys are PRTG IDs
@@ -252,6 +253,22 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                 new_unnamed_clover
             continue
 
+        # Check if this is a backup Clover.
+        if 'backup' in clover['description'].lower():
+            # Add this Clover to the backup Meraki Clovers dictionary.
+            new_backup_clover = MerakiClover(
+                meraki_id=clover['id'],
+                name=clover['description'],
+                site=clean_probe,
+                window_number=None,
+                mac_address=clover['mac'],
+                ip_address=clover['ip'],
+                error=None
+            )
+            clover_sync_status.meraki_backup_clovers[clover['mac']] = \
+                new_backup_clover
+            continue
+
         # Check if the Clover name is formatted incorrectly.
         if not MERAKI_NAME_REGEX.match(clover['description']):
             # Add this Clover to the invalid Meraki Clovers dictionary.
@@ -336,6 +353,18 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
                                  key=lambda device: f'{device.site} '
                                                     f'{device.name}'):
         global_logger.info(f'    {offline_device.site} {offline_device.name}')
+    global_logger.info(LOG_LINE_BREAK)
+
+    # Report backup devices.
+    backup_devices_count = len(clover_sync_status.meraki_offline_clovers)
+    global_logger.info('|')
+    global_logger.info(
+        log_title(f'Backup devices found ({backup_devices_count})'))
+    for backup_device in sorted(clover_sync_status.
+                                meraki_backup_clovers.values(),
+                                key=lambda device: f'{device.site} '
+                                                   f'{device.name}'):
+        global_logger.info(f'    {backup_device.site} {backup_device.name}')
     global_logger.info(LOG_LINE_BREAK)
 
     # Report invalid devices.
@@ -922,6 +951,28 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             clover_sync_status.unsyncable_clovers[clover_mac] = \
                 new_unsyncable_pair
             continue
+        # Check this PRTG Clover against the backup Meraki Clovers.
+        elif clover_mac in clover_sync_status.meraki_backup_clovers.keys():
+            # Make a reference to the backup Meraki Clover.
+            backup_meraki_clover = \
+                clover_sync_status.meraki_backup_clovers[clover_mac]
+
+            # PRTG Clover has a matching Meraki Clover, but the Meraki
+            # Clover is a backup Clover. Make a new Clover pair and add
+            # it to the unsyncable Clover dictionary.
+            new_unsyncable_pair = CloverPair(
+                meraki_clover=backup_meraki_clover,
+                prtg_clover=all_prtg_clovers[clover_mac],
+                mismatch_error=f'Clover with name '
+                               f'"{all_prtg_clovers[clover_mac].name}" has a '
+                               f'corresponding Clover in Meraki that is '
+                               f'labeled as a backup | '
+                               f'Meraki: {backup_meraki_clover.name} | '
+                               f'PRTG: {all_prtg_clovers[clover_mac].name}'
+            )
+            clover_sync_status.unsyncable_clovers[clover_mac] = \
+                new_unsyncable_pair
+            continue
 
         # This is exclusive to PRTG and not in Meraki.
         continue
@@ -987,7 +1038,9 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
                          AND().
                          field('company.name').equals('Vitu').
                          AND().
-                         field('u_active_contract').equals('true')
+                         field('u_active_contract').equals('true').
+                         AND().
+                         field('install_status').not_equals('7')  # 7 = Retired
                          )
     snow_clover_resp = snow_clover_table.get(
         query=snow_clover_query,
@@ -1348,6 +1401,55 @@ def make_snow_tickets(clover_sync_status: CloverSyncStatus):
         except pysnow.exceptions as e:
             global_logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for {lost_clover["name"]}')
+            global_logger.error(f'Error: {e}')
+
+    # Make a ticket for each missed device swap via an erroneous backup.
+    for unsyncable_pair in clover_sync_status.unsyncable_clovers.values():
+        # Check if the Clover is not a backup in Meraki.
+        if 'backup' not in unsyncable_pair.meraki_clover.name.lower():
+            continue
+
+        # Make references to each Clover.
+        meraki_clover = unsyncable_pair.meraki_clover
+        prtg_clover = unsyncable_pair.prtg_clover
+
+        # Check if a ticket for this Clover pair already exists.
+        if meraki_clover.mac_address in existing_sync_incidents.keys() or \
+           meraki_clover.mac_address in existing_sync_ritms.keys():
+            continue
+
+        # Create the payload to make a new INC in ServiceNow.
+        global_logger.warning(f'Opening INC for {prtg_clover.name} because '
+                              f'the corresponding Clover in Meraki is labeled'
+                              f'as a backup Clover')
+        ticket_payload = {
+            'short_description':
+                f'[Meraki] Vitu Clover Sync issue for {prtg_clover.name} '
+                f'{meraki_clover.mac_address}',
+            'description':
+                f'Clover mismatch detected - {prtg_clover.name} '
+                f'has a corresponding Clover in Meraki that is labeled as a '
+                f'backup Clover',
+            'caller_id': 'Cody Harper',
+            'assignment_group': 'Expert Services Level One Team',
+            'company': 'Vitu',
+            'location': meraki_clover.site,
+            'configuration_item': prtg_clover.name,
+            'u_milestone': 'Vitu Oct 2020 - Sept 2021',
+            'category': 'Inquiry',
+            'severity': '2 - Medium'
+        }
+
+        # Try to make a new incident for this mismatched Clovers.
+        try:
+            snow_incident_table.create(payload=ticket_payload)
+            global_logger.info(f'Successfully created the INC for '
+                               f'{prtg_clover.name}!')
+            time.sleep(1)
+            total_tickets += 1
+        except pysnow.exceptions as e:
+            global_logger.error(f'An error occurred when trying to make a new '
+                                f'INC in ServiceNow for {prtg_clover.name}')
             global_logger.error(f'Error: {e}')
 
     # Make an automated ticket for each invalid Meraki Clover.

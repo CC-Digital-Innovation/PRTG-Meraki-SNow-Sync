@@ -43,6 +43,14 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.2.0 - 2023/09/20
+    - Added support for filtering out online backup devices in Meraki
+    - Added support to check if a Clover mismatch happens due to a
+      mislabeled backup device in Meraki
+    - Added check for retired devices when pulling ServiceNow for
+      active Clover devices
+
+
 -  version 2.1.1 - 2023/03/21
     - Fixed various log appearance bugs
     - Added library dependency for pysnow (python-magic-bin)
