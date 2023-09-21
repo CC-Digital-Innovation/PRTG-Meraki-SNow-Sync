@@ -43,6 +43,10 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.2.1 - 2023/09/21
+    - Fixed incorrect backup device count in the log
+
+
 -  version 2.2.0 - 2023/09/20
     - Added support for filtering out online backup devices in Meraki
     - Added support to check if a Clover mismatch happens due to a

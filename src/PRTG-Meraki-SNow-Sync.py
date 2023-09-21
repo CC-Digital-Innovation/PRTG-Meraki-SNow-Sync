@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.2.0'
+__version__ = '2.2.1'
 __status__ = 'Released'
 
 
@@ -356,7 +356,7 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
     global_logger.info(LOG_LINE_BREAK)
 
     # Report backup devices.
-    backup_devices_count = len(clover_sync_status.meraki_offline_clovers)
+    backup_devices_count = len(clover_sync_status.meraki_backup_clovers)
     global_logger.info('|')
     global_logger.info(
         log_title(f'Backup devices found ({backup_devices_count})'))
