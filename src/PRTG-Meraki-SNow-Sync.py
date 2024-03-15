@@ -23,7 +23,7 @@ __credits__ = ['Anthony Farina']
 __maintainer__ = 'Anthony Farina'
 __email__ = 'farinaanthony96@gmail.com'
 __license__ = 'MIT'
-__version__ = '2.2.1'
+__version__ = '2.3.0'
 __status__ = 'Released'
 
 
@@ -61,13 +61,12 @@ SNOW_CLIENT = pysnow.Client(
 
 # Regex (regular expression) constant global variables.
 PRTG_NAME_REGEX = \
-    re.compile(r'\[[A-Za-z]+\d{3}] [IBC]? Window [A-Z]{0,3}\d{1,2}[A-Z]? '
-               r'd4:95:24(:[\da-f]{2}){3}')
+    re.compile(r'^\[[A-Za-z]+\d{3}(?:\([A-Za-z]+IBC\d{3}\))?] (?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
 MERAKI_NAME_REGEX = \
-    re.compile(r'Window [A-Z]{0,3}\d{1,2}[A-Z]? d4:95:24(:[\da-f]{2}){3}')
-SITE_INFO_REGEX = re.compile(r' \(.+\)')
+    re.compile(r'^(?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
+SITE_INFO_REGEX = re.compile(r'\(.+\)')
 EVERYTHING_BUT_WIND_NUM_REGEX = \
-    re.compile(r'\[.+]|Window|([\da-f]{2}:){5}[\da-f]{2}')
+    re.compile(r'\[.+]|IBC|Window|([\da-f]{2}:){5}[\da-f]{2}')
 CLOVER_SN_LONG_REGEX = \
     re.compile(r'Clover [A-Z]\d{3}[A-Z] [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SN_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
@@ -212,7 +211,8 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> \
 
         # Clean the Clover's probe name by removing parentheses and its
         # contents.
-        clean_probe = re.sub(SITE_INFO_REGEX, '', clover['recentDeviceName'])
+        clean_probe = re.sub(SITE_INFO_REGEX, '',
+                             clover['recentDeviceName']).strip()
 
         # Check if this Clover is connected to a Ready Meraki access point.
         if 'ready' in clean_probe.lower():
@@ -503,7 +503,7 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         # Get the PRTG ID, clean up the probe name, and try to get a valid
         # Clover MAC address from the name of the device.
         prtg_id = f'{clover["objid"]}'
-        clean_probe = re.sub(SITE_INFO_REGEX, '', clover['probe'])
+        clean_probe = re.sub(SITE_INFO_REGEX, '', clover['probe']).strip()
         name_mac_address = get_clover_mac(clover['name'])
 
         # Check if this Clover is connected to a Ready probe.

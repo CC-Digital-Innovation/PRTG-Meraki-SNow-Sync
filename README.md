@@ -11,7 +11,7 @@ Keeps our ServiceNow CMDB updated with the latest devices in our network system 
 and notifies engineers of discrepancies amongst these systems.
 
 ## Requirements
-- Python 3.11.1
+- Python 3.12.2+
 - configparser
 - meraki
 - pysnow
@@ -43,6 +43,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.3.0 - 2024/03/15
+    - Added support for loguru
+    - Added support for "IBC" offices
+
+
 -  version 2.2.1 - 2023/09/21
     - Fixed incorrect backup device count in the log
 
