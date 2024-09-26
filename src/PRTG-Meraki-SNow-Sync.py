@@ -84,7 +84,7 @@ LOGGER_FILE_NAME = os.getenv('LOGGER_FILE_NAME')
 
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = True
+DEBUG_MODE = False
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 

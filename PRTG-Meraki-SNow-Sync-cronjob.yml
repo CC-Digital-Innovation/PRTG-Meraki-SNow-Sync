@@ -51,6 +51,7 @@ spec:
                 export LOGGER_FILE_NAME="{{ .Data.data.logger_file_name }}"
               {{- end }}
             vault.hashicorp.com/ca-cert: /run/secrets/kubernetes.io/serviceaccount/ca.crt
+            vault.hashicorp.com/agent-pre-populate-only: 'true'
         spec:
           containers:
             - image: harbor.k3s.quokka.ninja/library/prtg-meraki-snow-sync:0.0.3
