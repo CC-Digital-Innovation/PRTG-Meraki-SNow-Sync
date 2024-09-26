@@ -54,11 +54,8 @@ spec:
         spec:
           containers:
             - image: registry.quokka.ninja/ccfs/prtg-meraki-snow-sync:0.0.1
-              imagePullPolicy: Always
               name: prtg-meraki-snow-sync
-              args: ['/bin/bash', '-c', 'source /vault/secrets/v-meraki && source /vault/secrets/v-prtg && source /vault/secrets/servicenow && source /vault/secrets/syslog && source /vault/secrets/v-sync-script && python ./src/PRTG-Meraki-SNow-Sync.py']
-          imagePullSecrets:
-            - name: gitlab-cr
+              args: ['/bin/bash', '-c', 'source /vault/secrets/v-meraki && source /vault/secrets/v-prtg && source /vault/secrets/servicenow && source /vault/secrets/syslog && source /vault/secrets/v-sync_script && python ./src/PRTG-Meraki-SNow-Sync.py']
           restartPolicy: Never
           serviceAccountName: prtg-meraki-snow-sync
       backoffLimit: 3
