@@ -11,23 +11,24 @@ Keeps our ServiceNow CMDB updated with the latest devices in our network system 
 and notifies engineers of discrepancies amongst these systems.
 
 ## Requirements
-- Python 3.12.2+
-- configparser
+- Python 3.12+
+- loguru
 - meraki
 - pysnow
-- pytz
+- python-dotenv
+- python-magic-bin (only needed if running on a Windows system)
 - requests
 
 ## Usage
-- Edit the config file with relevant PRTG, Meraki, and ServiceNow access 
-  information as well as the name of the logger.
+- Edit the example environment file with relevant PRTG, Meraki, ServiceNow,
+  Papertrail, and logger information.
 
 - Simply run the script using Python:
   `python PRTG-Meraki-SNow-Sync.py`
 
 ## Compatibility
 Should be able to run on any machine with a Python interpreter. This script
-was only tested on a Windows machine running Python 3.11.1.
+was only tested on a Windows machine running Python 3.12.2.
 
 ## Disclaimer
 The code provided in this project is an open source example and should not
@@ -43,9 +44,31 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 2.6.0 - 2024/09/25
+    - Added debug mode
+    - Fixed PRTG MAC sensor mismatch not being ticketed
+
+
+-  version 2.5.0 - 2024/06/07
+    - Completed support for "IBC" offices
+    - Removed config file in favor of environment variables
+    - Migrated company / customer information to environment variables
+    - Migrated to latest Kubernetes pipeline
+    - Migrated from Papertrail to remote Syslog server
+    - Added doc-strings for all functions / classes
+    - Updated README
+
+
+-  version 2.4.0 - 2024/04/26
+    - Fixed rare Clover renaming bug when the MAC address field in 
+      ServiceNow had capital letters in it
+    - Added more support for "IBC" offices
+    - Changed default caller ID for new ServiceNow tickets
+
+
 -  version 2.3.0 - 2024/03/15
     - Added support for loguru
-    - Added support for "IBC" offices
+    - Added some support for "IBC" offices
 
 
 -  version 2.2.1 - 2023/09/21

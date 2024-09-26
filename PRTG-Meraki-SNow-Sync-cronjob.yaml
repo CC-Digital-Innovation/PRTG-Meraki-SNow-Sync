@@ -4,24 +4,62 @@ metadata:
   name: prtg-meraki-snow-sync
   namespace: default
 spec:
-  schedule: "0 4 * * *"
   jobTemplate:
     spec:
       template:
+        metadata:
+          annotations:
+            vault.hashicorp.com/agent-inject: 'true'
+            vault.hashicorp.com/role: 'prtg_meraki_snow_sync'
+            vault.hashicorp.com/agent-inject-secret-v-meraki: 'secret/v/meraki'
+            vault.hashicorp.com/agent-inject-template-v-meraki: |
+              {{- with secret "secret/v/meraki" -}}
+                export MERAKI_API_KEY="{{ .Data.data.api_key }}"
+                export MERAKI_ORGANIZATION_ID="{{ .Data.data.organization_id }}"
+                export MERAKI_NETWORK_ID="{{ .Data.data.network_id }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-v-prtg: 'secret/v/prtg'
+            vault.hashicorp.com/agent-inject-template-v-prtg: |
+              {{- with secret "secret/v/prtg" -}}
+                export PRTG_TABLE_URL="{{ .Data.data.table_url }}"
+                export PRTG_USERNAME="{{ .Data.data.api_username }}"
+                export PRTG_PASSHASH="{{ .Data.data.api_passhash }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-servicenow: 'secret/servicenow'
+            vault.hashicorp.com/agent-inject-template-servicenow: |
+              {{- with secret "secret/servicenow" -}}
+                export SNOW_INSTANCE_NAME="{{ .Data.data.instance_name }}"
+                export SNOW_USERNAME="{{ .Data.data.anthony_username }}"
+                export SNOW_PASSWORD="{{ .Data.data.anthony_password }}"
+                export SNOW_CMDB_TABLET_TABLE_PATH="{{ .Data.data.cmdb_tablet_table_path }}"
+                export SNOW_SYNC_REQUEST_SYS_ID="{{ .Data.data.sync_request_sys_id }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-syslog: 'secret/syslog'
+            vault.hashicorp.com/agent-inject-template-syslog: |
+              {{- with secret "secret/syslog" -}}
+                export SYSLOG_ADDRESS="{{ .Data.data.address }}"
+                export SYSLOG_PORT="{{ .Data.data.port }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-v-sync-script: 'secret/v/sync_script'
+            vault.hashicorp.com/agent-inject-template-v-sync-script: |
+              {{- with secret "secret/v/sync_script" -}}
+                export SNOW_TICKET_CALLER_ID="{{ .Data.data.snow_ticket_caller_id }}"
+                export SNOW_TICKET_COMPANY="{{ .Data.data.snow_ticket_customer }}"
+                export SNOW_TICKET_ASSIGNED_TO="{{ .Data.data.snow_ticket_assigned_to }}"
+                export SNOW_TICKET_U_MILESTONE="{{ .Data.data.snow_ticket_u_milestone }}"
+                export LOGGER_NAME="{{ .Data.data.logger_name }}"
+                export LOGGER_FILE_NAME="{{ .Data.data.logger_file_name }}"
+              {{- end }}
+            vault.hashicorp.com/ca-cert: /run/secrets/kubernetes.io/serviceaccount/ca.crt
         spec:
           containers:
-            # Environment variables added for Vault
-            - env:
-                - name: JWT_PATH
-                  value: /var/run/secrets/kubernetes.io/serviceaccount/token
-                - name: VAULT_ADDR
-                  value: http://vault.vault:8200
-              image: registry.quokka.ninja/ccfs/prtg-meraki-snow-sync/prtg-meraki-snow-sync:latest
+            - image: registry.quokka.ninja/ccfs/prtg-meraki-snow-sync:0.0.1
+              imagePullPolicy: Always
               name: prtg-meraki-snow-sync
-          # Credentials secret added for authorizing private repository
+              args: ['/bin/bash', '-c', 'source /vault/secrets/v-meraki && source /vault/secrets/v-prtg && source /vault/secrets/servicenow && source /vault/secrets/syslog && source /vault/secrets/v-sync-script && python ./src/PRTG-Meraki-SNow-Sync.py']
           imagePullSecrets:
             - name: gitlab-cr
-          restartPolicy: OnFailure
-          # Service Account added for Vault
-          serviceAccountName: vault
+          restartPolicy: Never
+          serviceAccountName: prtg-meraki-snow-sync
       backoffLimit: 3
+  schedule: 0 4 * * *
