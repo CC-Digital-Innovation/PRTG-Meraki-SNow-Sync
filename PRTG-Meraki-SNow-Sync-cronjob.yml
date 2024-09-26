@@ -40,8 +40,8 @@ spec:
                 export SYSLOG_ADDRESS="{{ .Data.data.address }}"
                 export SYSLOG_PORT="{{ .Data.data.port }}"
               {{- end }}
-            vault.hashicorp.com/agent-inject-secret-v-sync-script: 'secret/v/sync_script'
-            vault.hashicorp.com/agent-inject-template-v-sync-script: |
+            vault.hashicorp.com/agent-inject-secret-v-sync_script: 'secret/v/sync_script'
+            vault.hashicorp.com/agent-inject-template-v-sync_script: |
               {{- with secret "secret/v/sync_script" -}}
                 export SNOW_TICKET_CALLER_ID="{{ .Data.data.snow_ticket_caller_id }}"
                 export SNOW_TICKET_COMPANY="{{ .Data.data.snow_ticket_customer }}"
