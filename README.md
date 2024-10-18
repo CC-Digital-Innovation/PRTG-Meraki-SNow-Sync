@@ -44,6 +44,12 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 3.0.0 - 2024/10/18
+    - Replaced autonomous RITM process with INCs so names will be changed manually
+    - Added logic to make tickets for missing Clovers in ServiceNow
+    - Made logging more uniform
+
+
 -  version 2.6.0 - 2024/09/25
     - Added debug mode
     - Fixed PRTG MAC sensor mismatch not being ticketed
