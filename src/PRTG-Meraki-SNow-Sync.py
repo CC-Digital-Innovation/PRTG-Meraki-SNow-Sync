@@ -71,7 +71,7 @@ SYSLOG_PORT = os.getenv('SYSLOG_PORT')
 
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = True
+DEBUG_MODE = False
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -379,7 +379,9 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus
                                  f'{device['recentDeviceName']} '
                                  f'{device['description']}'):
         logger.warning(f'    {unknown_device['recentDeviceName']} '
-                              f'{unknown_device['description']}')
+                       f'{(unknown_device['mac'] 
+                         if unknown_device['description'] is None 
+                         else unknown_device['description'])}')
     logger.info(LOG_LINE_BREAK)
 
     # Report offline devices.
@@ -1348,31 +1350,31 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
     
     # Check if there are missing Clovers in ServiceNow from Clover matches.
     for clover_pair in clover_sync_status.clover_matches.values():
-        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys():
+        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys() and 'backup' not in clover_pair.meraki_clover.name:
             # Make an INC saying that there is a missing Clover in the CMDB.
             clover_sync_status.servicenow_missing_clovers.add(clover_pair.meraki_clover.mac_address)
     
     # Check if there are missing Clovers in ServiceNow from Clover mismatches.
     for clover_pair in clover_sync_status.clover_mismatches.values():
-        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys():
+        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys() and 'backup' not in clover_pair.meraki_clover.name:
             # Make an INC saying that there is a missing Clover in the CMDB.
             clover_sync_status.servicenow_missing_clovers.add(clover_pair.meraki_clover.mac_address)
     
     # Check if there are missing Clovers in ServiceNow from unsyncable Clovers.
     for clover_pair in clover_sync_status.unsyncable_clovers.values():
-        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys():
+        if clover_pair.meraki_clover.mac_address not in servicenow_clovers.keys() and 'backup' not in clover_pair.meraki_clover.name:
             # Make an INC saying that there is a missing Clover in the CMDB.
             clover_sync_status.servicenow_missing_clovers.add(clover_pair.meraki_clover.mac_address)
             
     # Check if there are missing Clovers in ServiceNow from Meraki invalid Clovers.
-    for clover_mac in clover_sync_status.meraki_invalid_clovers.keys():
-        if clover_mac not in servicenow_clovers.keys():
-            clover_sync_status.servicenow_missing_clovers.add(clover_mac)
+    for clover in clover_sync_status.meraki_invalid_clovers.values():
+        if clover.mac_address not in servicenow_clovers.keys() and 'backup' not in clover.name.lower():
+            clover_sync_status.servicenow_missing_clovers.add(clover.mac_address)
             
     # Check if there are missing Clovers in ServiceNow from Meraki offline Clovers.
-    for clover_mac in clover_sync_status.meraki_offline_clovers.keys():
-        if clover_mac not in servicenow_clovers.keys():
-            clover_sync_status.servicenow_missing_clovers.add(clover_mac)
+    for clover in clover_sync_status.meraki_offline_clovers.values():
+        if clover.mac_address not in servicenow_clovers.keys() and 'backup' not in clover.name.lower():
+            clover_sync_status.servicenow_missing_clovers.add(clover.mac_address)
             
     # Check if there are missing Clovers in ServiceNow from PRTG "dc" MAC Clovers.
     for clover_mac in clover_sync_status.prtg_dc_macs.keys():
@@ -2049,7 +2051,7 @@ def log_title(title: str) -> str:
 def sync() -> None:
     """
     Runs the sync operation amongst PRTG, Meraki, and ServiceNow.
-    """    
+    """
 
     # Initialize the global logger for this script.
     initialize_logger()

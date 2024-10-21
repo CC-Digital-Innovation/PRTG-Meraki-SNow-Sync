@@ -44,6 +44,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 3.0.1 - 2024/10/21
+    - Print the MAC address of unknown devices in Meraki
+    - Exclude backup Clovers from ticket creation of missing Clovers in ServiceNow
+
+
 -  version 3.0.0 - 2024/10/18
     - Replaced autonomous RITM process with INCs so names will be changed manually
     - Added logic to make tickets for missing Clovers in ServiceNow
