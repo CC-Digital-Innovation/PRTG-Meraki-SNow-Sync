@@ -28,11 +28,11 @@ spec:
             vault.hashicorp.com/agent-inject-secret-servicenow: 'secret/servicenow'
             vault.hashicorp.com/agent-inject-template-servicenow: |
               {{- with secret "secret/servicenow" -}}
-                export SNOW_INSTANCE_NAME="{{ .Data.data.instance_name }}"
-                export SNOW_USERNAME="{{ .Data.data.anthony_username }}"
-                export SNOW_PASSWORD="{{ .Data.data.anthony_password }}"
-                export SNOW_CMDB_TABLET_TABLE_PATH="{{ .Data.data.cmdb_tablet_table_path }}"
-                export SNOW_SYNC_REQUEST_SYS_ID="{{ .Data.data.sync_request_sys_id }}"
+                export SERVICENOW_INSTANCE_NAME="{{ .Data.data.instance_name }}"
+                export SERVICENOW_USERNAME="{{ .Data.data.anthony_username }}"
+                export SERVICENOW_PASSWORD="{{ .Data.data.anthony_password }}"
+                export SERVICENOW_CMDB_TABLET_TABLE_PATH="{{ .Data.data.cmdb_tablet_table_path }}"
+                export SERVICENOW_SYNC_REQUEST_SYS_ID="{{ .Data.data.sync_request_sys_id }}"
               {{- end }}
             vault.hashicorp.com/agent-inject-secret-syslog: 'secret/syslog'
             vault.hashicorp.com/agent-inject-template-syslog: |
@@ -43,10 +43,10 @@ spec:
             vault.hashicorp.com/agent-inject-secret-v-sync_script: 'secret/v/sync_script'
             vault.hashicorp.com/agent-inject-template-v-sync_script: |
               {{- with secret "secret/v/sync_script" -}}
-                export SNOW_TICKET_CALLER_ID="{{ .Data.data.snow_ticket_caller_id }}"
-                export SNOW_TICKET_COMPANY="{{ .Data.data.snow_ticket_customer }}"
-                export SNOW_TICKET_ASSIGNED_TO="{{ .Data.data.snow_ticket_assigned_to }}"
-                export SNOW_TICKET_U_MILESTONE="{{ .Data.data.snow_ticket_u_milestone }}"
+                export SERVICENOW_TICKET_CALLER_ID="{{ .Data.data.snow_ticket_caller_id }}"
+                export SERVICENOW_TICKET_COMPANY="{{ .Data.data.snow_ticket_customer }}"
+                export SERVICENOW_TICKET_ASSIGNED_TO="{{ .Data.data.snow_ticket_assigned_to }}"
+                export SERVICENOW_TICKET_U_MILESTONE="{{ .Data.data.snow_ticket_u_milestone }}"
                 export LOGGER_NAME="{{ .Data.data.logger_name }}"
                 export LOGGER_FILE_NAME="{{ .Data.data.logger_file_name }}"
               {{- end }}
