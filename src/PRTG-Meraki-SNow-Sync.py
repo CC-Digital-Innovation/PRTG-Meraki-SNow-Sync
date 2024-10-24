@@ -1450,7 +1450,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
     # Prepare the creation of tickets in ServiceNow.
     servicenow_incident_table = SERVICENOW_CLIENT.resource(api_path='/table/incident')
     existing_sync_incidents = dict()
-    total_tickets = 0
+    created_sync_incidents = dict()
 
     logger.info('|')
     logger.info(log_title('Begin ServiceNow Ticket Creation'))
@@ -1498,11 +1498,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             try:
                 # Only create the ticket in ServiceNow if we are not debugging.
                 if not DEBUG_MODE:
-                    servicenow_incident_table.create(payload=ticket_payload)
+                    created_sync_incidents[dc_mac_clover.mac_address] = \
+                        servicenow_incident_table.create(payload=ticket_payload)
                     time.sleep(1)
                 logger.info(f'Successfully created the INC for Clover '
                                    f'{dc_mac_clover.name}!')
-                total_tickets += 1
             except PysnowException as e:
                 logger.error(f'An error occurred when trying to make '
                                     f'a new INC in ServiceNow for Clover '
@@ -1533,11 +1533,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[excl_clover.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover ' +
                                f'{excl_clover.site} {excl_clover.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for Clover '
@@ -1569,11 +1569,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[excl_clover.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover ' +
                                f'{excl_clover.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for Clover ' +
@@ -1606,11 +1606,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[mm_clover_pair.meraki_clover.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover ' +
                                f'{mm_clover_pair.prtg_clover.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for Clover ' +
@@ -1649,11 +1649,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[lost_clover['mac_address']] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for '
                                f'{lost_clover['name']}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for {lost_clover['name']}')
@@ -1706,11 +1706,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[meraki_clover.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for '
                                f'{prtg_clover.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for {prtg_clover.name}')
@@ -1740,11 +1740,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[affected_mac] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover '
                                f'{mac_mismatched_clover.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a new '
                                 f'INC in ServiceNow for Clover '
@@ -1781,12 +1781,12 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[invalid_meraki.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover '
                                 f'{invalid_meraki.site} '
                                 f'{invalid_meraki.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a '
                                 f'new INC in ServiceNow for Clover '
@@ -1825,12 +1825,12 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[invalid_prtg.mac_address] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover '
                                 f'{invalid_prtg.site} '
                                 f'{invalid_prtg.name}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a '
                                 f'new INC in ServiceNow for Clover '
@@ -1839,9 +1839,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             logger.error(f'Error output: {str(e)}')
             
     # Make a ticket for each missing Clover in ServiceNow.
+    current_created_sync_incidents = list(created_sync_incidents.keys())
     for missing_clover_mac in clover_sync_status.servicenow_missing_clovers:
         # Check if a ticket for this Clover already exists.
-        if missing_clover_mac in existing_sync_incidents.keys():
+        if missing_clover_mac in existing_sync_incidents.keys() or \
+            missing_clover_mac in current_created_sync_incidents:
             continue
 
         # Create the payload to make a new INC in ServiceNow.
@@ -1867,11 +1869,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         try:
             # Only create the ticket in ServiceNow if we are not debugging.
             if not DEBUG_MODE:
-                servicenow_incident_table.create(payload=ticket_payload)
+                created_sync_incidents[missing_clover_mac] = \
+                    servicenow_incident_table.create(payload=ticket_payload)
                 time.sleep(1)
             logger.info(f'Successfully created the INC for Clover '
                         f'{missing_clover_mac}!')
-            total_tickets += 1
         except PysnowException as e:
             logger.error(f'An error occurred when trying to make a '
                          f'new INC in ServiceNow for Clover '
@@ -1882,7 +1884,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
     logger.info(LOG_LINE_BREAK)
     logger.info('|')
     logger.info(log_title('End ServiceNow Ticket Creation'))
-    logger.info(f'Total ServiceNow tickets created: {total_tickets}')
+    logger.info(f'Total ServiceNow tickets created: {len(created_sync_incidents)}')
     logger.info(LOG_LINE_BREAK)
 
 
