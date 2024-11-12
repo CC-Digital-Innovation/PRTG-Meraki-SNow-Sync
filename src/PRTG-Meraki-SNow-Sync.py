@@ -1841,9 +1841,14 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
     # Make a ticket for each missing Clover in ServiceNow.
     current_created_sync_incidents = list(created_sync_incidents.keys())
     for missing_clover_mac in clover_sync_status.servicenow_missing_clovers:
-        # Check if a ticket for this Clover already exists.
+        # Check if a ticket for this Clover already exists or this Clover is 
+        # a Clover that is specified as a Clover that does not need to be in
+        # our ServiceNow CMDB.
         if missing_clover_mac in existing_sync_incidents.keys() or \
-            missing_clover_mac in current_created_sync_incidents:
+            missing_clover_mac in current_created_sync_incidents or \
+            missing_clover_mac in clover_sync_status.meraki_offline_clovers.keys() or \
+            missing_clover_mac in clover_sync_status.meraki_backup_clovers.keys() or \
+            missing_clover_mac in clover_sync_status.prtg_offline_clovers.keys():
             continue
 
         # Create the payload to make a new INC in ServiceNow.

@@ -44,6 +44,11 @@ encounter any problems, please log an
 5. Submit a pull request ツ
 
 ## History
+-  version 3.0.2 - 2024/11/12
+    - Fixed bug that would categorize some offline Clovers as missing Clovers in
+      ServiceNow
+
+
 -  version 3.0.1 - 2024/10/21
     - Print the MAC address of unknown devices in Meraki
     - Exclude backup Clovers from ticket creation of missing Clovers in ServiceNow
