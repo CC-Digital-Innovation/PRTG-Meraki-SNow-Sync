@@ -71,7 +71,7 @@ SYSLOG_PORT = os.getenv('SYSLOG_PORT')
 
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = False
+DEBUG_MODE = True
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -1642,6 +1642,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             'configuration_item': lost_clover['name'],
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
 
@@ -1699,6 +1700,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             'configuration_item': config_item_name,
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
 
@@ -1774,6 +1776,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             'configuration_item': 'AG-LAB-FULLSET',
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
 
@@ -1818,6 +1821,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             'configuration_item': 'AG-LAB-FULLSET',
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
 
@@ -1867,6 +1871,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
             'configuration_item': 'AG-LAB-FULLSET',
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
 
@@ -1951,6 +1956,7 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> dic
             'configuration_item': config_item_name,
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
     # Check if the Clover object is a Meraki / PRTG Clover object.
@@ -1974,6 +1980,7 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> dic
             'configuration_item': config_item_name,
             'u_milestone': SERVICENOW_TICKET_U_MILESTONE,
             'category': 'Inquiry',
+            'subcategory': 'internal application',
             'severity': '2 - Medium'
         }
     # We were given invalid input.
