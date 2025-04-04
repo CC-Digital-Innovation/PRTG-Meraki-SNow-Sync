@@ -71,7 +71,7 @@ SYSLOG_PORT = os.getenv('SYSLOG_PORT')
 
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = True
+DEBUG_MODE = False
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
