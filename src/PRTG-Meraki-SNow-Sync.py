@@ -32,6 +32,7 @@ LOGGER_FILE_NAME = os.getenv('LOGGER_FILE_NAME')
 MERAKI_API_KEY = os.getenv('MERAKI_API_KEY')
 MERAKI_ORGANIZATION_ID = os.getenv('MERAKI_ORGANIZATION_ID')
 MERAKI_NETWORK_ID = os.getenv('MERAKI_NETWORK_ID')
+MERAKI_AP_NAME_DENY_LIST = ['ready']  # Lowercase substrings of access points that should be excluded from the sync.
 
 # Meraki regex constant global variables.
 MERAKI_CLOVER_NAME_REGEX = re.compile(r'^(?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
@@ -41,6 +42,7 @@ MERAKI_SITE_INFO_REGEX = re.compile(r'\(.+\)')
 PRTG_TABLE_URL = os.getenv('PRTG_TABLE_URL')
 PRTG_USERNAME = os.getenv('PRTG_USERNAME')
 PRTG_PASSHASH = os.getenv('PRTG_PASSHASH')
+PRTG_PROBE_NAME_DENY_LIST = ['ready', 'ag-lab']  # Lowercase substrings of probes that should be excluded from the sync.
 
 # PRTG regex constant global variables.
 PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}(?:\([A-Za-z]+IBC\d{3}\))?\] (?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
@@ -248,8 +250,9 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus
         clean_probe = re.sub(MERAKI_SITE_INFO_REGEX, '',
                              clover['recentDeviceName']).strip()
 
-        # Check if this Clover is connected to a Ready Meraki access point.
-        if 'ready' in clean_probe.lower():
+        # Check if this Clover is connected to an excluded access point.
+        access_point_name_lower = clean_probe.lower()
+        if any([meraki_ap_exclusion in access_point_name_lower for meraki_ap_exclusion in MERAKI_AP_NAME_DENY_LIST]):
             continue
 
         # Check if this Clover is offline.
@@ -468,8 +471,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Fill the sensor values dictionary with MAC address sensor values.
     for mac_sensor in prtg_macs_json['sensors']:
-        # Check if this Clover is connected to a Ready probe.
-        if 'ready' in mac_sensor['probe'].lower():
+        # Check if this Clover is connected to an excluded probe.
+        probe_name_lower = mac_sensor['probe'].lower()
+        if any([prtg_probe_exclusion in probe_name_lower for prtg_probe_exclusion in PRTG_PROBE_NAME_DENY_LIST]):
             continue
 
         # Get the PRTG ID of the related device.
@@ -512,8 +516,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
 
     # Fill the PRTG ID to S/N dictionary with serial number sensor values.
     for sn_sensor in prtg_sns_json['sensors']:
-        # Check if this Clover is connected to a Ready probe.
-        if 'ready' in sn_sensor['probe'].lower():
+        # Check if this Clover is connected to an excluded probe.
+        probe_name_lower = sn_sensor['probe'].lower()
+        if any([prtg_probe_exclusion in probe_name_lower for prtg_probe_exclusion in PRTG_PROBE_NAME_DENY_LIST]):
             continue
 
         # Get the PRTG ID of the relevant device.
@@ -557,8 +562,9 @@ def get_prtg_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
         clean_probe = re.sub(PRTG_SITE_INFO_REGEX, '', clover['probe']).strip()
         name_mac_address = get_clover_mac(clover['name'])
 
-        # Check if this Clover is connected to a Ready probe.
-        if 'ready' in clean_probe.lower():
+        # Check if this Clover is connected to an excluded probe.
+        probe_name_lower = clean_probe.lower()
+        if any([prtg_probe_exclusion in probe_name_lower for prtg_probe_exclusion in PRTG_PROBE_NAME_DENY_LIST]):
             continue
 
         # Check if this Clover's MAC address is not extractable.
