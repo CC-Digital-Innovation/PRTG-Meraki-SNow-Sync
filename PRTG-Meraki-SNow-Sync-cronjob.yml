@@ -54,7 +54,7 @@ spec:
             vault.hashicorp.com/agent-pre-populate-only: 'true'
         spec:
           containers:
-            - image: harbor.k3s.quokka.ninja/library/prtg-meraki-snow-sync:0.0.10
+            - image: harbor.k3s.quokka.ninja/library/prtg-meraki-snow-sync:0.0.11
               name: prtg-meraki-snow-sync
               args: ['/bin/bash', '-c', 'source /vault/secrets/v-meraki && source /vault/secrets/v-prtg && source /vault/secrets/servicenow && source /vault/secrets/syslog && source /vault/secrets/v-sync_script && python ./src/PRTG-Meraki-SNow-Sync.py']
           restartPolicy: Never
