@@ -1,21 +1,21 @@
-from datetime import datetime, timezone
-from enum import Enum
-from logging.handlers import SysLogHandler
 import os
 import re
 import sys
 import time
+from datetime import datetime, timezone
+from enum import Enum
+from logging.handlers import SysLogHandler
 
-from dotenv import load_dotenv
-from loguru import logger
+import dotenv
 import meraki
 import pysnow
-from pysnow.exceptions import PysnowException
 import requests
+from loguru import logger
+from pysnow.exceptions import PysnowException
 
 
 # ====================== Environment / Global Variables =======================
-load_dotenv(override=True)
+dotenv.load_dotenv(override=True)
 
 # Clover regex constant global variables.
 CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[.+\]|IBC|Window|Backup|([\da-fA-F]{2}:){5}[\da-fA-F]{2}')

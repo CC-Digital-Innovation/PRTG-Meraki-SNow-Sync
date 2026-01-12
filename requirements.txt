@@ -2,5 +2,4 @@ loguru
 meraki
 pysnow
 python-dotenv
-python-magic
 requests
