@@ -67,13 +67,9 @@ SERVICENOW_TICKET_ASSIGNED_TO = os.getenv('SERVICENOW_TICKET_ASSIGNED_TO')
 SERVICENOW_TICKET_COMPANY = os.getenv('SERVICENOW_TICKET_COMPANY')
 SERVICENOW_TICKET_U_MILESTONE = os.getenv('SERVICENOW_TICKET_U_MILESTONE')
 
-# Syslog constant global variables.
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS')
-SYSLOG_PORT = os.getenv('SYSLOG_PORT')
-
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = False
+DEBUG_MODE = True
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -2044,12 +2040,6 @@ def initialize_logger() -> None:
     now_utc = datetime.now(timezone.utc)
     logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log',
                format=logger_format)
-
-    # We only want to add the Syslog handle to the logger if we are in production.
-    if not DEBUG_MODE:
-        # Add the remote syslog server to the logger.
-        syslog_handle = SysLogHandler(address=(SYSLOG_ADDRESS, int(SYSLOG_PORT)), facility=14)
-        logger.add(syslog_handle, format=logger_format)
 
 
 def log_title(title: str) -> str:
