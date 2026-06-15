@@ -11,24 +11,18 @@ Keeps our ServiceNow CMDB updated with the latest devices in our network system 
 and notifies engineers of discrepancies amongst these systems.
 
 ## Requirements
-- Python 3.12+
-- loguru
-- meraki
-- pysnow
-- python-dotenv
-- python-magic-bin (only needed if running on a Windows system)
-- requests
+- Python 3.13.13
 
 ## Usage
-- Edit the example environment file with relevant PRTG, Meraki, ServiceNow,
-  Papertrail, and logger information.
+- Edit the example environment file with relevant PRTG, Meraki, ServiceNow, 
+  and logger information.
 
 - Simply run the script using Python:
-  `python PRTG-Meraki-SNow-Sync.py`
+  `python prtg_meraki_snow_sync.py`
 
 ## Compatibility
 Should be able to run on any machine with a Python interpreter. This script
-was only tested on a Windows machine running Python 3.12.2.
+was only tested on a Windows 11 OS running Python 3.13.13.
 
 ## Disclaimer
 The code provided in this project is an open source example and should not
