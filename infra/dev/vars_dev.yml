@@ -1,7 +1,7 @@
 repo: https://github.com/CC-Digital-Innovation/PRTG-Meraki-SNow-Sync
 ssh_url: git@github.com:CC-Digital-Innovation/PRTG-Meraki-SNow-Sync.git
-branch: main
+branch: dev
 project_root: src
-image: prtg-meraki-snow-sync
-manifest_path: PRTG-Meraki-SNow-Sync-cronjob.yml
-pipeline: prtg-meraki-snow-sync
+image: prtg-meraki-snow-sync-dev
+manifest_path: ./infra/dev/cronjob_dev.yml
+pipeline: prtg-meraki-snow-sync-dev
