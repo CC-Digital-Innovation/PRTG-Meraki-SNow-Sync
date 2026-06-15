@@ -77,7 +77,7 @@ jobs:
       - set_pipeline: ((pipeline))
         file: repo-pipeline/pipeline.yml
         var_files:
-          - repo-pipeline/vars.yml
+          - repo-pipeline/infra/prod/vars.yml
       - put: notifier
         params:
           alert_type: success
@@ -104,7 +104,7 @@ jobs:
       - set_pipeline: ((pipeline))
         file: repo-pipeline/pipeline.yml
         var_files:
-          - repo-pipeline/vars_dev.yml
+          - repo-pipeline/infra/dev/vars_dev.yml
       - put: notifier
         params:
           alert_type: success
