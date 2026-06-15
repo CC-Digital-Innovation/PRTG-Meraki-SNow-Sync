@@ -1,4 +1,17 @@
 resources:
+  # resource for reconfiguring pipeline
+  - name: repo-pipeline
+    type: git
+    icon: github
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+      paths:
+        - pipeline.yml
+        - infra/dev/vars_dev.yml
+        - infra/prod/vars.yml
   # resource for triggering pipeline; read-only
   - name: repo-read
     type: git
