@@ -13,6 +13,18 @@ resources:
         - ((project_root))
         - Dockerfile
         - requirements.txt
+  
+  # Resource for bumping the version in the manifest file
+  - name: infra-branch-manifest
+    type: git
+    icon: github
+    source:
+      uri: ((repo))
+      branch: infra
+      username: ((git.username))
+      password: ((git.password))
+      paths:
+        - ((manifest_path))
 
   # Production image registry resource
   - name: prod-image-registry
@@ -27,7 +39,7 @@ resources:
     type: registry-image
     source:
       repository: ((harbor.repository))/((image))
-      tag: dev
+      variant: dev
       username: ((harbor.username))
       password: ((harbor.password))
 
@@ -47,7 +59,7 @@ resources:
 
 
 jobs:
-  - name: push-dev-image-to-prod
+  - name: promote-dev-image-to-prod
     plan:
       # Trigger the pipeline when there is a PR merge to the "main" branch
       - get: repo-read
@@ -90,3 +102,50 @@ jobs:
         no_get: true
         params:
           bump: patch
+      # Use the bumped version in the manifest file
+      - get: infra-branch-manifest
+      - task: bump-with-yq
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/mikefarah/yq
+          inputs:
+            - name: infra-branch-manifest
+          outputs:
+            - name: bumped-manifest-file
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd infra-branch-manifest
+                yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))"' ((manifest_path))
+            user: root
+      # Commit the bumped manifest file to the "infra" branch
+      - task: git-commit-bumped-manifest
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/alpine/git
+          inputs:
+            - name: bumped-manifest-file
+          outputs:
+            - name: infra-branch-manifest
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bumped-manifest-file
+                git config --global user.email '<concourse.bot@example.com>'
+                git config --global user.name "Concourse Bot"
+                git add ((manifest_path))
+                git commit -m 'bump to ((.:bumped_version))'
+      # Push the committed bumped manifest file to the "infra" branch
+      - put: infra-branch-manifest
+        params:
+          repository: infra-branch-manifest
