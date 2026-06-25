@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import sys
@@ -2092,4 +2093,16 @@ def sync() -> None:
 
 
 if __name__ == '__main__':
+    # Use argparse to check if the script is running in debug mode.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Enables debug mode (will not make changes to ServiceNow)")
+    args = parser.parse_args()
+
+    # Set the global DEBUG_MODE variable based on the command line argument.
+    if args.debug:
+        DEBUG_MODE = True
+    else:
+        DEBUG_MODE = False
+    
+    # Run the script.
     sync()
