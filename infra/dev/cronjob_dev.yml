@@ -1,0 +1,70 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: prtg-meraki-snow-sync-dev
+  namespace: vitu-dev
+spec:
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            vault.hashicorp.com/agent-inject: 'true'
+            vault.hashicorp.com/role: 'prtg_meraki_snow_sync_dev'
+            vault.hashicorp.com/ca-cert: /run/secrets/kubernetes.io/serviceaccount/ca.crt
+            vault.hashicorp.com/agent-pre-populate-only: 'true'
+            vault.hashicorp.com/agent-inject-secret-v-meraki: 'secret/v/meraki'
+            vault.hashicorp.com/agent-inject-template-v-meraki: |
+              {{- with secret "secret/v/meraki" -}}
+                export MERAKI_API_KEY="{{ .Data.data.api_key }}"
+                export MERAKI_ORGANIZATION_ID="{{ .Data.data.organization_id }}"
+                export MERAKI_NETWORK_ID="{{ .Data.data.network_id }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-v-prtg: 'secret/v/prtg'
+            vault.hashicorp.com/agent-inject-template-v-prtg: |
+              {{- with secret "secret/v/prtg" -}}
+                export PRTG_TABLE_URL="{{ .Data.data.table_url }}"
+                export PRTG_USERNAME="{{ .Data.data.api_username }}"
+                export PRTG_PASSHASH="{{ .Data.data.api_passhash }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-servicenow: 'secret/servicenow'
+            vault.hashicorp.com/agent-inject-template-servicenow: |
+              {{- with secret "secret/servicenow" -}}
+                export SERVICENOW_INSTANCE_NAME="{{ .Data.data.instance_name }}"
+                export SERVICENOW_USERNAME="{{ .Data.data.anthony_username }}"
+                export SERVICENOW_PASSWORD="{{ .Data.data.anthony_password }}"
+                export SERVICENOW_CMDB_TABLET_TABLE_PATH="{{ .Data.data.cmdb_tablet_table_path }}"
+                export SERVICENOW_SYNC_REQUEST_SYS_ID="{{ .Data.data.sync_request_sys_id }}"
+              {{- end }}
+            vault.hashicorp.com/agent-inject-secret-v-sync_script: 'secret/v/sync_script'
+            vault.hashicorp.com/agent-inject-template-v-sync_script: |
+              {{- with secret "secret/v/sync_script" -}}
+                export SERVICENOW_TICKET_CALLER_ID="{{ .Data.data.snow_ticket_caller_id }}"
+                export SERVICENOW_TICKET_COMPANY="{{ .Data.data.snow_ticket_customer }}"
+                export SERVICENOW_TICKET_ASSIGNED_TO="{{ .Data.data.snow_ticket_assigned_to }}"
+                export SERVICENOW_TICKET_U_MILESTONE="{{ .Data.data.snow_ticket_u_milestone }}"
+                export LOGGER_NAME="{{ .Data.data.logger_name }}"
+                export LOGGER_FILE_NAME="{{ .Data.data.logger_file_name }}"
+              {{- end }}
+        spec:
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10014
+            runAsGroup: 10015
+          imagePullSecrets:
+            - name: tech-checkin-registry-secret
+          containers:
+            - image: harbor.pscp-css.support/dev/prtg-meraki-snow-sync:dev
+              name: prtg-meraki-snow-sync-dev
+              command: ['sh', '-c', 'source /vault/secrets/v-meraki && source /vault/secrets/v-prtg && source /vault/secrets/servicenow && source /vault/secrets/v-sync_script && python ./src/prtg_meraki_snow_sync.py']
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                readOnlyRootFilesystem: true
+          restartPolicy: Never
+          serviceAccountName: prtg-meraki-snow-sync-dev
+      backoffLimit: 3
+  schedule: 0 23 * * *
+  timeZone: US/Pacific
