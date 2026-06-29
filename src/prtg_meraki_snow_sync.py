@@ -20,7 +20,7 @@ dotenv.load_dotenv(override=True)
 # Clover regex constant global variables.
 CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[.+\]|Window|Backup|([\da-fA-F]{2}:){5}[\da-fA-F]{2}')
 CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'[A-Z]{0,4}\d{1,2}(?:[A-Z])?')
-CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z] [A-Z]\d{3}[A-Z]{2}\d{8}')
+CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z]? [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SERIAL_NUMBER_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_VENDOR_MAC_ADDRESS = '74:d4:dd'
 CLOVER_MAC_ADDRESS_REGEX = re.compile(fr'{CLOVER_VENDOR_MAC_ADDRESS}(:[\da-f]{2}){{3}}')
