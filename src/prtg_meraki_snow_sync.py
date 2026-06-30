@@ -18,12 +18,12 @@ from pysnow.exceptions import PysnowException
 dotenv.load_dotenv(override=True)
 
 # Clover regex constant global variables.
-CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[.+\]|Window|Backup|([\da-fA-F]{2}:){5}[\da-fA-F]{2}')
-CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'[A-Z]{0,4}\d{1,2}(?:[A-Z])?')
+CLOVER_WINDOW_NUMBER_REGEX = re.compile(r' ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) ')
 CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z]? [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SERIAL_NUMBER_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_VENDOR_MAC_ADDRESSES = ['d4:95:24', '74:d4:dd']
-CLOVER_MAC_ADDRESS_REGEX = re.compile(fr'({"|".join(CLOVER_VENDOR_MAC_ADDRESSES)})(:[\da-f]{2}){3}')
+CLOVER_VENDOR_MAC_ADDRESSES_STR = "|".join(CLOVER_VENDOR_MAC_ADDRESSES)
+CLOVER_MAC_ADDRESS_REGEX = re.compile(r'^(' + CLOVER_VENDOR_MAC_ADDRESSES_STR + r')(:[\da-f]{2}){3}$')
 
 # Logger constant global variables.
 LOGGER_NAME = os.getenv('LOGGER_NAME')
@@ -36,7 +36,7 @@ MERAKI_NETWORK_ID = os.getenv('MERAKI_NETWORK_ID')
 MERAKI_AP_NAME_DENY_LIST = ['ready']  # Lowercase substrings of access points that should be excluded from the sync.
 
 # Meraki regex constant global variables.
-MERAKI_CLOVER_NAME_REGEX = re.compile(fr'^Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {"|".join(CLOVER_VENDOR_MAC_ADDRESSES)}(?::[\da-f]{2}){3}$')
+MERAKI_CLOVER_NAME_REGEX = re.compile(r'^Window [A-Z]{0,4}\d{1,2}[A-Z]? (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-f]{2}){3}$')
 MERAKI_SITE_INFO_REGEX = re.compile(r'\(.+\)')
 
 # PRTG constant global variables.
@@ -46,9 +46,9 @@ PRTG_PASSHASH = os.getenv('PRTG_PASSHASH')
 PRTG_PROBE_NAME_DENY_LIST = ['ready', 'ag-lab']  # Lowercase substrings of probes that should be excluded from the sync.
 
 # PRTG regex constant global variables.
-PRTG_CLOVER_NAME_REGEX = re.compile(fr'^\[[A-Za-z]+\d{3}\] Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {"|".join(CLOVER_VENDOR_MAC_ADDRESSES)}(?::[\da-f]{2}){3}$')
-PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'\[.+\]')
-PRTG_SITE_INFO_REGEX = re.compile(r' \(.+\)')
+PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\] Window ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-fA-F]{2}){3}$')
+PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\]')
+PRTG_SITE_INFO_REGEX = re.compile(r' \(.+\)$')
 
 # ServiceNow constant global variables.
 SERVICENOW_INSTANCE_NAME = os.getenv('SERVICENOW_INSTANCE_NAME')
