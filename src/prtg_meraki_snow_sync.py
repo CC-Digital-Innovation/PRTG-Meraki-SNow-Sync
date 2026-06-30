@@ -22,8 +22,8 @@ CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[.+\]|Window|Backup|([\da-fA-
 CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'[A-Z]{0,4}\d{1,2}(?:[A-Z])?')
 CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z]? [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SERIAL_NUMBER_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
-CLOVER_VENDOR_MAC_ADDRESS = '74:d4:dd'
-CLOVER_MAC_ADDRESS_REGEX = re.compile(fr'{CLOVER_VENDOR_MAC_ADDRESS}(:[\da-f]{2}){{3}}')
+CLOVER_VENDOR_MAC_ADDRESSES = ['d4:95:24', '74:d4:dd']
+CLOVER_MAC_ADDRESS_REGEX = re.compile(fr'({"|".join(CLOVER_VENDOR_MAC_ADDRESSES)})(:[\da-f]{2}){3}')
 
 # Logger constant global variables.
 LOGGER_NAME = os.getenv('LOGGER_NAME')
@@ -36,7 +36,7 @@ MERAKI_NETWORK_ID = os.getenv('MERAKI_NETWORK_ID')
 MERAKI_AP_NAME_DENY_LIST = ['ready']  # Lowercase substrings of access points that should be excluded from the sync.
 
 # Meraki regex constant global variables.
-MERAKI_CLOVER_NAME_REGEX = re.compile(fr'^Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {CLOVER_VENDOR_MAC_ADDRESS}(?::[\da-f]{2}){3}$')
+MERAKI_CLOVER_NAME_REGEX = re.compile(fr'^Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {"|".join(CLOVER_VENDOR_MAC_ADDRESSES)}(?::[\da-f]{2}){3}$')
 MERAKI_SITE_INFO_REGEX = re.compile(r'\(.+\)')
 
 # PRTG constant global variables.
@@ -46,7 +46,7 @@ PRTG_PASSHASH = os.getenv('PRTG_PASSHASH')
 PRTG_PROBE_NAME_DENY_LIST = ['ready', 'ag-lab']  # Lowercase substrings of probes that should be excluded from the sync.
 
 # PRTG regex constant global variables.
-PRTG_CLOVER_NAME_REGEX = re.compile(fr'^\[[A-Za-z]+\d{3}\] Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {CLOVER_VENDOR_MAC_ADDRESS}(?::[\da-f]{2}){3}$')
+PRTG_CLOVER_NAME_REGEX = re.compile(fr'^\[[A-Za-z]+\d{3}\] Window [A-Z]{0,4}\d{1,2}(?:[A-Z])? {"|".join(CLOVER_VENDOR_MAC_ADDRESSES)}(?::[\da-f]{2}){3}$')
 PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'\[.+\]')
 PRTG_SITE_INFO_REGEX = re.compile(r' \(.+\)')
 
@@ -1884,10 +1884,9 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
 
 def get_clover_mac(name: str) -> str:
     """
-    Extracts the final 6 hex characters (including the 2 ':' separators) from a
-    given Clover name string and returns a lowercase colon-separated valid
-    Clover MAC address. If a MAC address cannot be extracted the empty string 
-    ('') is returned.
+    Attempts to extract a valid Clover MAC address from a given Clover name 
+    string and returns a lowercase colon-separated valid Clover MAC address. 
+    If a MAC address cannot be extracted the empty string ('') is returned.
 
     Args:
         name (str): The Clover name.
@@ -1897,7 +1896,7 @@ def get_clover_mac(name: str) -> str:
             empty string ('').
     """
 
-    mac = f'{CLOVER_VENDOR_MAC_ADDRESS}:' + name.strip().lower().replace('-', ':').replace('::', ':')[-8:]
+    mac = name.strip().lower().replace('-', ':').replace('::', ':')[-17:]
     return mac if CLOVER_MAC_ADDRESS_REGEX.match(mac) else ''
 
 
