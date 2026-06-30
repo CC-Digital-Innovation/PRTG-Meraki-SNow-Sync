@@ -43,7 +43,7 @@ MERAKI_SITE_INFO_REGEX = re.compile(r'\(.+\)')
 PRTG_TABLE_URL = os.getenv('PRTG_TABLE_URL')
 PRTG_USERNAME = os.getenv('PRTG_USERNAME')
 PRTG_PASSHASH = os.getenv('PRTG_PASSHASH')
-PRTG_PROBE_NAME_DENY_LIST = ['ready', 'ag-lab']  # Lowercase substrings of probes that should be excluded from the sync.
+PRTG_PROBE_NAME_DENY_LIST = ['local probe', 'net-dash', 'ready', 'ag-lab', 'vitu-probe', 'slave']  # Lowercase substrings of probes that should be excluded from the sync.
 
 # PRTG regex constant global variables.
 PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\] Window ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-fA-F]{2}){3}$')
