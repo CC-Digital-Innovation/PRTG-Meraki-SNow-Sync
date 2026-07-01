@@ -49,7 +49,7 @@ PRTG_PROBE_NAME_DENY_LIST = ['local probe', 'net-dash', 'ready', 'ag-lab', 'vitu
 # PRTG regex constant global variables.
 PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\] Window ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-fA-F]{2}){3}$')
 PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\]')
-PRTG_SITE_INFO_REGEX = re.compile(r' \(.+\)$')
+PRTG_SITE_INFO_REGEX = re.compile(r'(( MASTER)|( \(.+\)))', flags=re.IGNORECASE)
 
 # ServiceNow constant global variables.
 SERVICENOW_INSTANCE_NAME = os.getenv('SERVICENOW_INSTANCE_NAME')
