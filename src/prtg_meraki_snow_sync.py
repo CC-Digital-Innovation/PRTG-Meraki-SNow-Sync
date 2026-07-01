@@ -939,20 +939,19 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             continue
 
         prtg_clover = all_prtg_clovers[clover_mac]
-        prtg_site_clean = re.sub(r'MASTER', '', prtg_clover.site).replace('(', '').replace(')', '').strip()
 
         # Check if these Clovers do not have the same site.
-        if meraki_clover.site != prtg_site_clean:
+        if meraki_clover.site != prtg_clover.site:
             # Add these Clovers to the mismatch dictionary.
             logger.warning(f'    Site mismatch detected for Clover at site '\
-                           f'"{prtg_site_clean}" with name '
+                           f'"{prtg_clover.site}" with name '
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.site} | '
-                           f'PRTG: {prtg_site_clean}')
-            site_error = f'Clover at site "{prtg_site_clean}" with name '\
+                           f'PRTG: {prtg_clover.site}')
+            site_error = f'Clover at site "{prtg_clover.site}" with name '\
                          f'"{prtg_clover.name}" has sites ' \
                          f'that do not match | Meraki: {meraki_clover.site}' \
-                         f' | PRTG: {prtg_site_clean}'
+                         f' | PRTG: {prtg_clover.site}'
             new_mismatched_pair = \
                 CloverPair(
                     meraki_clover=meraki_clover,
@@ -968,11 +967,11 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
             logger.warning(f'    Window # mismatch detected for Clover at site '\
-                           f'"{prtg_site_clean}" with name ' +
+                           f'"{prtg_clover.site}" with name ' +
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.window_number} | '
                            f'PRTG: {prtg_clover.window_number}')
-            window_error = f'Clover at site "{prtg_site_clean}" with name '\
+            window_error = f'Clover at site "{prtg_clover.site}" with name '\
                            f'"{prtg_clover.name}" ' \
                            f'has window numbers that do not match | ' \
                            f'Meraki: {meraki_clover.window_number} | ' \
@@ -992,11 +991,11 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
             logger.warning(f'    IPv4 address mismatch detected for Clover at site '\
-                           f'"{prtg_site_clean}" with name '
+                           f'"{prtg_clover.site}" with name '
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.ip_address} | '
                            f'PRTG: {prtg_clover.ip_address}')
-            ip_error = f'Clover at site "{prtg_site_clean}" with name '\
+            ip_error = f'Clover at site "{prtg_clover.site}" with name '\
                        f'"{prtg_clover.name}" has IPv4 ' \
                        f'addresses that do not match | ' \
                        f'Meraki: {meraki_clover.ip_address} | ' \
