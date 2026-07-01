@@ -1666,7 +1666,7 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         # Create the payload to make a new INC in ServiceNow.
         logger.warning(f'Opening INC for Clover at site "{prtg_clover.site}" '\
                        f'with name "{prtg_clover.name}" because '
-                       f'the corresponding Clover in Meraki is labeled'
+                       f'the corresponding Clover in Meraki is labeled '
                        f'as a backup Clover')
         
         # Make the ServiceNow configuration item name for the ticket.
