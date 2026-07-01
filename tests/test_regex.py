@@ -361,11 +361,19 @@ def test_prtg_site_in_clover_name_regex():
 
 def test_prtg_site_info_regex():
     # Test valid PRTG site info.
+    assert PRTG_SITE_INFO_REGEX.match(' MASTER') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' master') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' Master') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' (MASTER)') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' (master)') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' (Master)') is not None
     assert PRTG_SITE_INFO_REGEX.match(' (1)') is not None
     assert PRTG_SITE_INFO_REGEX.match(' (2)') is not None
     assert PRTG_SITE_INFO_REGEX.match(' (new)') is not None
     assert PRTG_SITE_INFO_REGEX.match(' (new4362)') is not None
     assert PRTG_SITE_INFO_REGEX.match(' (LTE Only)') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' (1) ') is not None
+    assert PRTG_SITE_INFO_REGEX.match(' (new) ') is not None
     
     # Test invalid PRTG site info.
     assert PRTG_SITE_INFO_REGEX.match(' 1') is None
@@ -373,8 +381,6 @@ def test_prtg_site_info_regex():
     assert PRTG_SITE_INFO_REGEX.match(' 1)') is None
     assert PRTG_SITE_INFO_REGEX.match(' ()') is None
     assert PRTG_SITE_INFO_REGEX.match(' () ') is None
-    assert PRTG_SITE_INFO_REGEX.match(' (1) ') is None
-    assert PRTG_SITE_INFO_REGEX.match(' (new) ') is None
     assert PRTG_SITE_INFO_REGEX.match('(1)') is None
     assert PRTG_SITE_INFO_REGEX.match('(new)') is None
     assert PRTG_SITE_INFO_REGEX.match('()') is None
