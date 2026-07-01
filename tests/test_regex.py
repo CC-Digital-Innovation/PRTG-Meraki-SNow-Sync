@@ -13,107 +13,112 @@ from src.prtg_meraki_snow_sync import PRTG_SITE_INFO_REGEX
 
 def test_clover_window_number_regex():
     # Test numbered windows.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 01 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 11 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 00 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 99 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 0 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 000 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 111 ') is None
-    
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('01') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('11') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('00') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('99') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('0') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('000') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('111') is None
+
     # Test 2-character windows with / without numbers.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC1 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC9 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC00 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC10 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC100 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' Cc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' Cc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' Cc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cc ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CC ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC1') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC9') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC00') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC10') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC100') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('Cc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('Cc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('Cc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cc') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CC') is None
     
     # Test 3-character windows with / without numbers.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC1 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC9 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC00 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC10 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC100 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' ccc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' ccc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' ccc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCC ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' ccc ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCC ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC1') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC9') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC00') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC10') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC100') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('ccc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('ccc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('ccc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCC') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('ccc') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCC') is None
 
     # Test 4-character windows with / without numbers.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC1 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC9 ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC00 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC10 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC100 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cccc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cccc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cccc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCCC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCCC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCCC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcCC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcCC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CcCC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCcC1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCcC11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCcC111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCc1 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCc11 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCc111 ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' CCCC ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cccc ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' cCCC ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC1') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC9') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC00') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC10') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC100') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cccc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cccc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cccc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCCC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCCC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCCC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcCC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcCC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CcCC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCcC1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCcC11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCcC111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCc1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCc11') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCc111') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('CCCC') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cccc') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('cCCC') is None
     
     # Test window numbers with a single letter suffix.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1A ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1B ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1Z ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10A ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10B ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10Z ') is not None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1a ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1b ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1z ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10a ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10b ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 10z ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100A ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100B ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100Z ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100a ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100b ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 100z ') is None
-    
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1A') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1B') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1Z') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10A') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10B') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10Z') is not None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1a') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1b') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1z') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10a') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10b') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('10z') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100A') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100B') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100Z') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100a') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100b') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('100z') is None
+
     # Test invalid window numbers.
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1AA ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1BB ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1ZZ ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' B1BB ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' B1B ') is None
-    assert CLOVER_WINDOW_NUMBER_REGEX.match(' 1 ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1AA') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1BB') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1ZZ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('B1BB') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('B1B') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('1') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('   12') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('   12    ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('12    ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('    ') is None
+    assert CLOVER_WINDOW_NUMBER_REGEX.match('') is None
 
 
 def test_clover_serial_number_long_regex():
