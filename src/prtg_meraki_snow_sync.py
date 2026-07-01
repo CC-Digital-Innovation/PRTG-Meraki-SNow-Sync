@@ -18,12 +18,13 @@ from pysnow.exceptions import PysnowException
 dotenv.load_dotenv(override=True)
 
 # Clover regex constant global variables.
-CLOVER_WINDOW_NUMBER_REGEX = re.compile(r' ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) ')
+CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'^(([A-Z]{2,4}\d)|(\d{2})|(\d{2}[A-Z]))$')
 CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z]? [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SERIAL_NUMBER_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_VENDOR_MAC_ADDRESSES = ['d4:95:24', '74:d4:dd']
 CLOVER_VENDOR_MAC_ADDRESSES_STR = "|".join(CLOVER_VENDOR_MAC_ADDRESSES)
 CLOVER_MAC_ADDRESS_REGEX = re.compile(r'^(' + CLOVER_VENDOR_MAC_ADDRESSES_STR + r')(:[\da-f]{2}){3}$')
+CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[[A-Za-z]+\d{3}\]|Window|Backup|([\dA-Fa-f]{2}(:|-)){5}[\dA-Fa-f]{2}', flags=re.IGNORECASE)
 
 # Logger constant global variables.
 LOGGER_NAME = os.getenv('LOGGER_NAME')
@@ -1978,13 +1979,14 @@ def get_window_number(clover_name: str) -> str | None:
             name, otherwise return None.
     """
 
-    # Remove the site from the Clover name in case this is a PRTG Clover name.
-    clover_name_no_site = re.sub(PRTG_SITE_IN_CLOVER_NAME_REGEX, '', clover_name)
+    # Remove all non-window number characters.
+    window_number = re.sub(CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX, '', clover_name).strip()
 
-    # Extract the window number from the Clover name and return it if it's valid,
-    # otherwise return None.
-    window_number = re.findall(CLOVER_WINDOW_NUMBER_REGEX, clover_name_no_site)[0]
-    return None if window_number == '' else window_number
+    # Extract the window number from the resulting string and return it if it's
+    # valid, otherwise return None.
+    window_number_match = re.match(CLOVER_WINDOW_NUMBER_REGEX, window_number)
+    
+    return None if not window_number_match else window_number_match[0].upper()
 
 
 def initialize_logger() -> None:
