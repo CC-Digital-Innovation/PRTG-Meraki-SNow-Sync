@@ -226,8 +226,9 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus
     for clover in meraki_clovers:
         # Check if this device is a Clover device or the probe is unknown.
         if clover['manufacturer'] is None or \
-                'clover' not in clover['manufacturer'].lower() or \
-                clover['recentDeviceName'] is None:
+            clover['recentDeviceName'] is None or \
+            ('clover' not in clover['manufacturer'].lower() and \
+            'quanta' not in clover['manufacturer'].lower()):
             # Add this device to the unknown devices list.
             clover_sync_status.meraki_unknown_devices.append(clover)
             continue
