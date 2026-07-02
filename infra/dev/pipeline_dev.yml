@@ -13,9 +13,9 @@ resources:
         - ((project_root))
         - Dockerfile
         - requirements.txt
-  
-  # Resource for bumping the version in the manifest file
-  - name: infra-manifest
+
+  # Resource for writing to repository; write-only to avoid retriggering pipeline
+  - name: bump-repo
     type: git
     icon: source-repository
     source:
@@ -23,8 +23,6 @@ resources:
       branch: ((branch))
       username: ((git.username))
       password: ((git.password))
-      paths:
-        - ((manifest_path))
   
   # Image registry resource
   - name: image-registry
@@ -68,10 +66,10 @@ jobs:
           inputs:
             - name: repo-read
           outputs:
-            - name: dev-image
-            - name: repo-read
+            - name: image
           params:
             CONTEXT: repo-read
+            UNPACK_ROOTFS: "true"
           run:
             path: build
       # Scan the dev image for vulnerabilities
@@ -84,12 +82,12 @@ jobs:
               repository: aquasec/trivy
               tag: latest
           inputs:
-            - name: dev-image
+            - name: image
           run:
             path: sh
             args:
               - -c
-              - trivy image --no-progress --exit-code 1 --severity HIGH,CRITICAL --input dev-image/image.tar
+              - trivy image --no-progress --exit-code 1 --severity HIGH,CRITICAL --input image/image.tar
       # Get the current version and bump it
       - get: versioning-file
         params:
@@ -101,11 +99,10 @@ jobs:
       - put: image-registry
         no_get: true
         params:
-          image: dev-image/image.tar
-          version: ((.:bumped_version))
-          variant: dev
+          image: image/image.tar
+          version: ((.:bumped_version))-dev
       # Use the new dev image in the manifest file
-      - get: infra-manifest
+      - get: bump-repo
       - task: bump-with-yq
         config:
           platform: linux
@@ -114,15 +111,15 @@ jobs:
             source:
               repository: docker.io/mikefarah/yq
           inputs:
-            - name: infra-manifest
+            - name: bump-repo
           outputs:
-            - name: bumped-manifest-file
+            - name: bump-repo
           run:
             path: sh
             args:
               - -exc
               - |
-                cd infra-manifest
+                cd bump-repo
                 yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))-dev"' ((manifest_path))
             user: root
       # Commit the bumped manifest file
@@ -134,21 +131,21 @@ jobs:
             source:
               repository: docker.io/alpine/git
           inputs:
-            - name: bumped-manifest-file
+            - name: bump-repo
           outputs:
-            - name: infra-manifest
+            - name: bump-repo
           run:
             path: sh
             args:
               - -exc
               - |
-                cd bumped-manifest-file
+                cd bump-repo
                 git config --global user.email '<concourse.bot@example.com>'
                 git config --global user.name "Concourse Bot"
                 git add ((manifest_path))
                 git commit -m 'bump to ((.:bumped_version))-dev'
       # Push the committed bumped manifest file
-      - put: infra-manifest
+      - put: bump-repo
         no_get: true
         params:
-          repository: infra-manifest
+          repository: bump-repo
