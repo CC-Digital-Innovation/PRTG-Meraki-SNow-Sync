@@ -50,7 +50,7 @@ spec:
         runAsUser: 10014
         runAsGroup: 10015
       containers:
-        - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.13-dev
+        - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.18-dev
           name: prtg-meraki-snow-sync-dev
           command: ['sh', '-c', 'source /vault/secrets/meraki && source /vault/secrets/prtg && source /vault/secrets/servicenow && source /vault/secrets/sync_script && python ./src/prtg_meraki_snow_sync.py --debug']
           securityContext:
