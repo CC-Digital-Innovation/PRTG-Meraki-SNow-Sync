@@ -15,7 +15,7 @@ resources:
         - requirements.txt
 
   # Resource for bumping the version in the manifest file
-  - name: infra-manifest
+  - name: bump-repo
     type: git
     icon: source-repository
     source:
@@ -23,8 +23,6 @@ resources:
       branch: ((branch))
       username: ((git.username))
       password: ((git.password))
-      paths:
-        - ((manifest_path))
 
   # Production image registry resource
   - name: prod-image-registry
@@ -89,7 +87,7 @@ jobs:
           image: dev-image-registry/image.tar
           version: ((.:bumped_version))
       # Use the new prod image in the manifest file
-      - get: infra-manifest
+      - get: bump-repo
       - task: bump-with-yq
         config:
           platform: linux
@@ -98,15 +96,15 @@ jobs:
             source:
               repository: docker.io/mikefarah/yq
           inputs:
-            - name: infra-manifest
+            - name: bump-repo
           outputs:
-            - name: bumped-manifest-file
+            - name: bump-repo
           run:
             path: sh
             args:
               - -exc
               - |
-                cd infra-manifest
+                cd bump-repo
                 yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))"' ((manifest_path))
             user: root
       # Commit the bumped manifest file
@@ -118,24 +116,24 @@ jobs:
             source:
               repository: docker.io/alpine/git
           inputs:
-            - name: bumped-manifest-file
+            - name: bump-repo
           outputs:
-            - name: infra-manifest
+            - name: bump-repo
           run:
             path: sh
             args:
               - -exc
               - |
-                cd bumped-manifest-file
+                cd bump-repo
                 git config --global user.email '<concourse.bot@example.com>'
                 git config --global user.name "Concourse Bot"
                 git add ((manifest_path))
                 git commit -m 'bump to ((.:bumped_version))'
       # Push the committed bumped manifest file
-      - put: infra-manifest
+      - put: bump-repo
         no_get: true
         params:
-          repository: infra-manifest
+          repository: bump-repo
       # Push the new version to the version file in the "version" branch
       - put: versioning-file
         no_get: true
