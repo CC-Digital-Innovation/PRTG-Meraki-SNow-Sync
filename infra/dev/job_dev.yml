@@ -3,6 +3,9 @@ kind: Job
 metadata:
   name: prtg-meraki-snow-sync-dev
   namespace: vitu-dev
+  annotations:
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
 spec:
   template:
     metadata:
