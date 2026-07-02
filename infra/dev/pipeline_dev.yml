@@ -29,7 +29,7 @@ resources:
   # Image registry resource
   - name: image-registry
     type: registry-image
-    icon: lighthouse
+    icon: lighthouse-on
     source:
       repository: ((harbor.repository))/((image))
       username: ((harbor.username))
