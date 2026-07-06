@@ -65,17 +65,19 @@ jobs:
       - get: repo-read
         trigger: true
       # Get the current version
-      - get: versioning-file
+      - get: versioning-file-current
+        resource: versioning-file
       # Save the current version to a variable
       - load_var: current_version
-        file: versioning-file/version
+        file: versioning-file-current/version
       # Get the bumped version
-      - get: versioning-file
+      - get: versioning-file-bumped
+        resource: versioning-file
         params:
           bump: patch
       # Save the bumped version to a variable
       - load_var: bumped_version
-        file: versioning-file/version
+        file: versioning-file-bumped/version
       # Get the dev image
       - get: dev-image-registry
         params:
