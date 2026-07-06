@@ -17,6 +17,8 @@ def test_clover_window_number_regex():
     assert CLOVER_WINDOW_NUMBER_REGEX.match('11') is not None
     assert CLOVER_WINDOW_NUMBER_REGEX.match('00') is not None
     assert CLOVER_WINDOW_NUMBER_REGEX.match('99') is not None
+    
+    # Test invalid window numbers.
     assert CLOVER_WINDOW_NUMBER_REGEX.match('1') is None
     assert CLOVER_WINDOW_NUMBER_REGEX.match('0') is None
     assert CLOVER_WINDOW_NUMBER_REGEX.match('000') is None
