@@ -80,7 +80,7 @@ jobs:
       - get: dev-image-registry
         params:
           format: oci
-      # Push the dev image with the bumped version (without the "dev" variant)as the prod image
+      # Push the dev image with the bumped version (without the "dev" variant) as the prod image
       - put: prod-image-registry
         no_get: true
         params:
