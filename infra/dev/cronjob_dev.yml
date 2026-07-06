@@ -65,5 +65,5 @@ spec:
           restartPolicy: Never
           serviceAccountName: prtg-meraki-snow-sync-dev
       backoffLimit: 2
-  schedule: 50 13 6 7 *
+  schedule: 52 14 6 7 *
   timeZone: US/Eastern
