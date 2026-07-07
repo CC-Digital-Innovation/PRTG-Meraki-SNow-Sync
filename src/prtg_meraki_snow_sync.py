@@ -2,6 +2,7 @@ import argparse
 import os
 import re
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from enum import Enum
@@ -2007,18 +2008,26 @@ def initialize_logger() -> None:
     # Add the console to the logger.
     logger.add(sys.stdout, format=logger_format)
 
-    # Check if the "logs" folder exists. If not, try to create it.
-    if not os.path.isdir(f'{SCRIPT_PATH}/../logs'):
-        try:
+    # Test if we have write permissions on this operating system.
+    has_write_permission = True
+    try:
+        with tempfile.TemporaryFile() as temporary_file:
+            temporary_file.write(b'Hello, world!')
+    except OSError as e:
+        print(f'Error creating temporary file: {str(e)}')
+        print('Not creating log file')
+        has_write_permission = False
+
+    # Check if we can write log files.
+    if has_write_permission:
+        # Check if the "logs" folder exists. If not, create it.
+        if not os.path.isdir(f'{SCRIPT_PATH}/../logs'):
             os.mkdir(f'{SCRIPT_PATH}/../logs')
             
-            # Add the local log file to the logger.
-            now_utc = datetime.now(timezone.utc)
-            logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log', 
-                       format=logger_format)
-        except OSError as e:
-            print(f'Error creating logs folder: {str(e)}')
-            print('Not creating log file')
+        # Add the local log file to the logger.
+        now_utc = datetime.now(timezone.utc)
+        logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log', 
+                    format=logger_format)
 
 
 def log_title(title: str) -> str:
