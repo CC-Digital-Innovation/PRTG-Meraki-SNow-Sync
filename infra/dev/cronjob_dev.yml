@@ -67,3 +67,7 @@ spec:
       backoffLimit: 2
   schedule: 57 14 6 7 *
   timeZone: US/Eastern
+  template:
+    spec:
+      containers:
+        - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.18-dev
