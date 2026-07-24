@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN python -m pip install --upgrade pip && \
+RUN python -m pip install --upgrade pip==26.1.2 && \
     python -m pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 COPY ./src .
