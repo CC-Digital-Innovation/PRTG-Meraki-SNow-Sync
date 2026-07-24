@@ -1,0 +1,151 @@
+resources:
+  # Resource for triggering pipeline
+  - name: repo-read
+    type: git
+    icon: source-repository
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+      # Determines what files trigger the pipeline
+      paths:
+        - ((project_root))
+        - Dockerfile
+        - requirements.txt
+
+  # Resource for writing to repository; write-only to avoid retriggering pipeline
+  - name: bump-repo
+    type: git
+    icon: source-repository
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+  
+  # Image registry resource
+  - name: image-registry
+    type: registry-image
+    icon: lighthouse-on
+    source:
+      repository: ((harbor.repository))/((image))
+      username: ((harbor.username))
+      password: ((harbor.password))
+
+  # Resource for versioning file
+  - name: versioning-file
+    type: semver
+    icon: numeric
+    source:
+      initial_version: 0.0.1
+      driver: git
+      uri: ((ssh_url))
+      branch: version
+      file: version
+      private_key: ((git.private_key))
+      git_user: "Concourse Bot <concourse.bot@example.com>"
+      commit_message: "bump to version %version%"
+
+
+jobs:
+  - name: build-and-scan-dev-image
+    plan:
+      # Trigger the pipeline when there is an update to the "dev" branch
+      - get: repo-read
+        trigger: true
+      # Build a fresh dev image
+      - task: build-task-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: repo-read
+          outputs:
+            - name: image
+          params:
+            CONTEXT: repo-read
+            UNPACK_ROOTFS: "true"
+          run:
+            path: build
+      # Scan the dev image for vulnerabilities
+      - task: trivy-scan
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: aquasec/trivy
+              tag: latest
+          inputs:
+            - name: image
+          run:
+            path: sh
+            args:
+              - -c
+              - trivy image --no-progress --exit-code 1 --severity HIGH,CRITICAL --input image/image.tar
+      # Get the current version and bump it
+      - get: versioning-file
+        params:
+          bump: patch
+      # Save the bumped version to a variable
+      - load_var: bumped_version
+        file: versioning-file/version
+      # Push the dev image with the bumped version and variant tag to the image registry
+      - put: image-registry
+        no_get: true
+        params:
+          image: image/image.tar
+          version: ((.:bumped_version))-dev
+      # Use the new dev image in the manifest file
+      - get: bump-repo
+      - task: bump-with-yq
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/mikefarah/yq
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))-dev"' ((manifest_path))
+            user: root
+      # Commit the bumped manifest file
+      - task: git-commit-bumped-manifest
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/alpine/git
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                git config --global user.email '<concourse.bot@example.com>'
+                git config --global user.name "Concourse Bot"
+                git add ((manifest_path))
+                git commit -m 'bump to ((.:bumped_version))-dev'
+      # Push the committed bumped manifest file
+      - put: bump-repo
+        no_get: true
+        params:
+          repository: bump-repo

@@ -1,10 +1,11 @@
+import argparse
 import os
 import re
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from logging.handlers import SysLogHandler
 
 import dotenv
 import meraki
@@ -18,11 +19,13 @@ from pysnow.exceptions import PysnowException
 dotenv.load_dotenv(override=True)
 
 # Clover regex constant global variables.
-CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[.+\]|IBC|Window|Backup|([\da-fA-F]{2}:){5}[\da-fA-F]{2}')
-CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'[A-Z]{0,3}\d{1,2}(?:[A-Z])?')
-CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z] [A-Z]\d{3}[A-Z]{2}\d{8}')
+CLOVER_WINDOW_NUMBER_REGEX = re.compile(r'^(([A-Z]{2,4}\d)|(\d{2})|(\d{2}[A-Z]))$')
+CLOVER_SERIAL_NUMBER_LONG_REGEX = re.compile(r'Clover [A-Z]\d{3}[A-Z]? [A-Z]\d{3}[A-Z]{2}\d{8}')
 CLOVER_SERIAL_NUMBER_SHORT_REGEX = re.compile(r'[A-Z]\d{3}[A-Z]{2}\d{8}')
-CLOVER_MAC_ADDRESS_REGEX = re.compile(r'd4:95:24(:[\da-f]{2}){3}')
+CLOVER_VENDOR_MAC_ADDRESSES = ['d4:95:24', '74:d4:dd']
+CLOVER_VENDOR_MAC_ADDRESSES_STR = "|".join(CLOVER_VENDOR_MAC_ADDRESSES)
+CLOVER_MAC_ADDRESS_REGEX = re.compile(r'^(' + CLOVER_VENDOR_MAC_ADDRESSES_STR + r')(:[\da-f]{2}){3}$')
+CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX = re.compile(r'\[[A-Za-z]+\d{3}\]|Window|Backup|([\dA-Fa-f]{2}(:|-)){5}[\dA-Fa-f]{2}', flags=re.IGNORECASE)
 
 # Logger constant global variables.
 LOGGER_NAME = os.getenv('LOGGER_NAME')
@@ -35,19 +38,20 @@ MERAKI_NETWORK_ID = os.getenv('MERAKI_NETWORK_ID')
 MERAKI_AP_NAME_DENY_LIST = ['ready']  # Lowercase substrings of access points that should be excluded from the sync.
 
 # Meraki regex constant global variables.
-MERAKI_CLOVER_NAME_REGEX = re.compile(r'^(?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
+MERAKI_CLOVER_NAME_REGEX = re.compile(r'^Window [A-Z]{0,4}\d{1,2}[A-Z]? (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-f]{2}){3}$')
 MERAKI_SITE_INFO_REGEX = re.compile(r'\(.+\)')
 
 # PRTG constant global variables.
 PRTG_TABLE_URL = os.getenv('PRTG_TABLE_URL')
 PRTG_USERNAME = os.getenv('PRTG_USERNAME')
 PRTG_PASSHASH = os.getenv('PRTG_PASSHASH')
-PRTG_PROBE_NAME_DENY_LIST = ['ready', 'ag-lab']  # Lowercase substrings of probes that should be excluded from the sync.
+# Lowercase substrings of probes that should be excluded from the sync.
+PRTG_PROBE_NAME_DENY_LIST = ['local probe', 'net-dash', 'ready', 'ag-lab', 'vitu-probe', 'slave']
 
 # PRTG regex constant global variables.
-PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}(?:\([A-Za-z]+IBC\d{3}\))?\] (?:IBC )?Window [A-Z]{0,3}\d{1,2}(?:[A-Z])? d4:95:24(?::[\da-f]{2}){3}$')
-PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'\[.+\]')
-PRTG_SITE_INFO_REGEX = re.compile(r' \(.+\)')
+PRTG_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\] Window ([A-Z]{2,4}\d|\d{2}|\d{2}[A-Z]) (' + "|".join(CLOVER_VENDOR_MAC_ADDRESSES) + r')(:[\da-fA-F]{2}){3}$')
+PRTG_SITE_IN_CLOVER_NAME_REGEX = re.compile(r'^\[[A-Za-z]+\d{3}\]')
+PRTG_SITE_INFO_REGEX = re.compile(r'(( MASTER)|( \(.+\)))', flags=re.IGNORECASE)
 
 # ServiceNow constant global variables.
 SERVICENOW_INSTANCE_NAME = os.getenv('SERVICENOW_INSTANCE_NAME')
@@ -67,13 +71,9 @@ SERVICENOW_TICKET_ASSIGNED_TO = os.getenv('SERVICENOW_TICKET_ASSIGNED_TO')
 SERVICENOW_TICKET_COMPANY = os.getenv('SERVICENOW_TICKET_COMPANY')
 SERVICENOW_TICKET_U_MILESTONE = os.getenv('SERVICENOW_TICKET_U_MILESTONE')
 
-# Syslog constant global variables.
-SYSLOG_ADDRESS = os.getenv('SYSLOG_ADDRESS')
-SYSLOG_PORT = os.getenv('SYSLOG_PORT')
-
 # Other constant global variables.
 DC_TICKETING = False
-DEBUG_MODE = False
+DEBUG_MODE = True
 LOG_LINE_BREAK = '--------------------------------------------------------------'
 SCRIPT_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -96,15 +96,10 @@ class MerakiClover(object):
         self.meraki_id = meraki_id
         self.name = name
         self.site = site
-        self.is_ibc = False
         self.window_number = window_number
         self.mac_address = mac_address
         self.ip_address = ip_address
         self.error = error
-
-    # Set IBC status of Clover.
-    def __post_init__(self):
-        self.is_ibc = True if "IBC" in self.name else False
 
 
 class PRTGClover(object):
@@ -125,17 +120,11 @@ class PRTGClover(object):
         self.prtg_id = prtg_id
         self.name = name
         self.site = site
-        self.is_ibc = False
         self.window_number = window_number
         self.mac_address = mac_address
         self.ip_address = ip_address
         self.serial_number = serial_number
         self.error = error
-    
-    # Set IBC status of Clover.
-    def __post_init__(self):
-        name_no_site = re.sub(PRTG_SITE_IN_CLOVER_NAME_REGEX, '', self.name)
-        self.is_ibc = True if "IBC" in name_no_site else False
 
 
 class CloverPair(object):
@@ -239,8 +228,8 @@ def get_meraki_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus
     for clover in meraki_clovers:
         # Check if this device is a Clover device or the probe is unknown.
         if clover['manufacturer'] is None or \
-                'clover' not in clover['manufacturer'].lower() or \
-                clover['recentDeviceName'] is None:
+           clover['recentDeviceName'] is None or \
+           ('clover' not in clover['manufacturer'].lower() and 'quanta' not in clover['manufacturer'].lower()):
             # Add this device to the unknown devices list.
             clover_sync_status.meraki_unknown_devices.append(clover)
             continue
@@ -951,20 +940,19 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             continue
 
         prtg_clover = all_prtg_clovers[clover_mac]
-        prtg_site_no_ibc = re.sub(r'\(.+\)', '', prtg_clover.site).strip()
 
         # Check if these Clovers do not have the same site.
-        if meraki_clover.site != prtg_site_no_ibc:
+        if meraki_clover.site != prtg_clover.site:
             # Add these Clovers to the mismatch dictionary.
             logger.warning(f'    Site mismatch detected for Clover at site '\
-                           f'"{prtg_site_no_ibc}" with name '
+                           f'"{prtg_clover.site}" with name '
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.site} | '
-                           f'PRTG: {prtg_site_no_ibc}')
-            site_error = f'Clover at site "{prtg_site_no_ibc}" with name '\
+                           f'PRTG: {prtg_clover.site}')
+            site_error = f'Clover at site "{prtg_clover.site}" with name '\
                          f'"{prtg_clover.name}" has sites ' \
                          f'that do not match | Meraki: {meraki_clover.site}' \
-                         f' | PRTG: {prtg_site_no_ibc}'
+                         f' | PRTG: {prtg_clover.site}'
             new_mismatched_pair = \
                 CloverPair(
                     meraki_clover=meraki_clover,
@@ -980,11 +968,11 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
             logger.warning(f'    Window # mismatch detected for Clover at site '\
-                           f'"{prtg_site_no_ibc}" with name ' +
+                           f'"{prtg_clover.site}" with name ' +
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.window_number} | '
                            f'PRTG: {prtg_clover.window_number}')
-            window_error = f'Clover at site "{prtg_site_no_ibc}" with name '\
+            window_error = f'Clover at site "{prtg_clover.site}" with name '\
                            f'"{prtg_clover.name}" ' \
                            f'has window numbers that do not match | ' \
                            f'Meraki: {meraki_clover.window_number} | ' \
@@ -1004,11 +992,11 @@ def analyze_clovers(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             # Add these Clovers to the mismatch dictionary while removing
             # them from their respective Clover dictionaries.
             logger.warning(f'    IPv4 address mismatch detected for Clover at site '\
-                           f'"{prtg_site_no_ibc}" with name '
+                           f'"{prtg_clover.site}" with name '
                            f'{prtg_clover.name} | '
                            f'Meraki: {meraki_clover.ip_address} | '
                            f'PRTG: {prtg_clover.ip_address}')
-            ip_error = f'Clover at site "{prtg_site_no_ibc}" with name '\
+            ip_error = f'Clover at site "{prtg_clover.site}" with name '\
                        f'"{prtg_clover.name}" has IPv4 ' \
                        f'addresses that do not match | ' \
                        f'Meraki: {meraki_clover.ip_address} | ' \
@@ -1306,12 +1294,7 @@ def sync_to_snow(clover_sync_status: CloverSyncStatus) -> CloverSyncStatus:
             servicenow_update['location'] = meraki_clover.site
 
         # Check if the name is incorrect in Snow.
-        if meraki_clover.is_ibc:
-            correct_name = meraki_clover.site + ' Clover IBC Window' + \
-            meraki_clover.window_number
-        else:
-            correct_name = meraki_clover.site + ' Clover Window' + \
-            meraki_clover.window_number
+        correct_name = meraki_clover.site + ' Clover Window' + meraki_clover.window_number
         if servicenow_clover['name'] != correct_name:
             servicenow_update['name'] = correct_name
 
@@ -1683,14 +1666,11 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
         # Create the payload to make a new INC in ServiceNow.
         logger.warning(f'Opening INC for Clover at site "{prtg_clover.site}" '\
                        f'with name "{prtg_clover.name}" because '
-                       f'the corresponding Clover in Meraki is labeled'
+                       f'the corresponding Clover in Meraki is labeled '
                        f'as a backup Clover')
         
         # Make the ServiceNow configuration item name for the ticket.
-        if meraki_clover.is_ibc or prtg_clover.is_ibc:
-            config_item_name = f'{meraki_clover.site} Clover IBC Window{meraki_clover.window_number}'
-        else:
-            config_item_name = f'{meraki_clover.site} Clover Window{meraki_clover.window_number}'
+        config_item_name = f'{meraki_clover.site} Clover Window{meraki_clover.window_number}'
         ticket_payload = {
             'short_description':
                 f'[Meraki] Vitu Clover Sync issue for {prtg_clover.name} '
@@ -1906,10 +1886,9 @@ def make_servicenow_incident_tickets(clover_sync_status: CloverSyncStatus) -> No
 
 def get_clover_mac(name: str) -> str:
     """
-    Extracts the final 6 hex characters (including the 2 ':' separators) from a
-    given Clover name string and returns a lowercase colon-separated valid
-    Clover MAC address. If a MAC address cannot be extracted the empty string 
-    ('') is returned.
+    Attempts to extract a valid Clover MAC address from a given Clover name 
+    string and returns a lowercase colon-separated valid Clover MAC address. 
+    If a MAC address cannot be extracted the empty string ('') is returned.
 
     Args:
         name (str): The Clover name.
@@ -1919,7 +1898,7 @@ def get_clover_mac(name: str) -> str:
             empty string ('').
     """
 
-    mac = 'd4:95:24:' + name.strip().lower().replace('-', ':').replace('::', ':')[-8:]
+    mac = name.strip().lower().replace('-', ':').replace('::', ':')[-17:]
     return mac if CLOVER_MAC_ADDRESS_REGEX.match(mac) else ''
 
 
@@ -1945,11 +1924,7 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> dic
         prtg_clover = clover_obj.prtg_clover
 
         # Make the ServiceNow configuration item name for the INC.
-        if meraki_clover.is_ibc or prtg_clover.is_ibc:
-            config_item_name = f'{prtg_clover.site} Clover IBC Window{prtg_clover.window_number}'
-        else:
-            config_item_name = f'{prtg_clover.site} Clover Window{prtg_clover.window_number}'
-
+        config_item_name = f'{prtg_clover.site} Clover Window{prtg_clover.window_number}'
         ticket_payload = {
             'short_description':
                 f'[PRTG] [Meraki] Vitu Clover Sync issue at {prtg_clover.site} '
@@ -1969,11 +1944,7 @@ def make_incident_payload(clover_obj: object, platform: AffectedPlatform) -> dic
     elif isinstance(clover_obj, MerakiClover) or \
             isinstance(clover_obj, PRTGClover):
         # Make the ServiceNow configuration item name for the ticket.
-        if clover_obj.is_ibc:
-            config_item_name = f'{clover_obj.site} Clover IBC Window{clover_obj.window_number}'
-        else:
-            config_item_name = f'{clover_obj.site} Clover Window{clover_obj.window_number}'
-
+        config_item_name = f'{clover_obj.site} Clover Window{clover_obj.window_number}'
         ticket_payload = {
             'short_description':
                 f'[{platform.value}] Vitu Clover Sync issue at '
@@ -2009,13 +1980,14 @@ def get_window_number(clover_name: str) -> str | None:
             name, otherwise return None.
     """
 
-    # Remove the site from the Clover name in case this is a PRTG Clover name.
-    clover_name_no_site = re.sub(PRTG_SITE_IN_CLOVER_NAME_REGEX, '', clover_name)
+    # Remove all non-window number characters.
+    window_number = re.sub(CLOVER_ALL_BUT_WINDOW_NUMBER_REGEX, '', clover_name).strip()
 
-    # Extract the window number from the Clover name and return it if it's valid,
-    # otherwise return None.
-    window_number = re.findall(CLOVER_WINDOW_NUMBER_REGEX, clover_name_no_site)[0]
-    return None if window_number == '' else window_number
+    # Extract the window number from the resulting string and return it if it's
+    # valid, otherwise return None.
+    window_number_match = re.match(CLOVER_WINDOW_NUMBER_REGEX, window_number)
+    
+    return None if not window_number_match else window_number_match[0].upper()
 
 
 def initialize_logger() -> None:
@@ -2023,10 +1995,6 @@ def initialize_logger() -> None:
     Initializes the global logger for this script. Logs will be forwarded to 
     the console, a local log file, and a remote syslog server.
     """
-
-    # Check if the "logs" folder exists. If not, create it.
-    if not os.path.isdir(f'{SCRIPT_PATH}/../logs'):
-        os.mkdir(f'{SCRIPT_PATH}/../logs')
 
     # Customize the logger's appearance.
     logger.remove()
@@ -2040,16 +2008,25 @@ def initialize_logger() -> None:
     # Add the console to the logger.
     logger.add(sys.stdout, format=logger_format)
 
-    # Add the local log file to the logger.
-    now_utc = datetime.now(timezone.utc)
-    logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log',
-               format=logger_format)
+    # Test if we have write permissions on this operating system.
+    has_write_permission = True
+    try:
+        with tempfile.TemporaryFile() as temporary_file:
+            temporary_file.write(b'Hello, world!')
+    except OSError as e:
+        print(f'Error creating temporary file: {str(e)}')
+        print('Not creating log file')
+        has_write_permission = False
 
-    # We only want to add the Syslog handle to the logger if we are in production.
-    if not DEBUG_MODE:
-        # Add the remote syslog server to the logger.
-        syslog_handle = SysLogHandler(address=(SYSLOG_ADDRESS, int(SYSLOG_PORT)), facility=14)
-        logger.add(syslog_handle, format=logger_format)
+    # Check if we can write log files.
+    if has_write_permission:
+        # Check if the "logs" folder exists. If not, create it.
+        if not os.path.isdir(f'{SCRIPT_PATH}/../logs'):
+            os.mkdir(f'{SCRIPT_PATH}/../logs')
+            
+        # Add the local log file to the logger.
+        now_utc = datetime.now(timezone.utc)
+        logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log', format=logger_format)
 
 
 def log_title(title: str) -> str:
@@ -2102,4 +2079,16 @@ def sync() -> None:
 
 
 if __name__ == '__main__':
+    # Use argparse to check if the script is running in debug mode.
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--debug", action="store_true", help="Enables debug mode (will not make changes to ServiceNow)")
+    args = parser.parse_args()
+
+    # Set the global DEBUG_MODE variable based on the command line argument.
+    if args.debug:
+        DEBUG_MODE = True
+    else:
+        DEBUG_MODE = False
+    
+    # Run the script.
     sync()

@@ -1,0 +1,143 @@
+resources:
+  # Resource for triggering pipeline
+  - name: repo-read
+    type: git
+    icon: source-repository
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+      # Determines what files trigger the pipeline
+      paths:
+        - ((project_root))
+        - Dockerfile
+        - requirements.txt
+
+  # Resource for bumping the version in the manifest file
+  - name: bump-repo
+    type: git
+    icon: source-repository
+    source:
+      uri: ((repo))
+      branch: ((branch))
+      username: ((git.username))
+      password: ((git.password))
+
+  # Production image registry resource
+  - name: prod-image-registry
+    type: registry-image
+    icon: lighthouse-on
+    source:
+      repository: ((harbor.repository))/((image))
+      username: ((harbor.username))
+      password: ((harbor.password))
+
+  # Development image registry resource
+  - name: dev-image-registry
+    type: registry-image
+    icon: lighthouse-on
+    source:
+      repository: ((harbor.repository))/((image))
+      variant: dev
+      username: ((harbor.username))
+      password: ((harbor.password))
+
+  # Resource for versioning file
+  - name: versioning-file
+    type: semver
+    icon: numeric
+    source:
+      initial_version: 0.0.1
+      driver: git
+      uri: ((ssh_url))
+      branch: version
+      file: version
+      private_key: ((git.private_key))
+      git_user: "Concourse Bot <concourse.bot@example.com>"
+      commit_message: "bump to version %version%"
+
+
+jobs:
+  - name: promote-dev-image-to-prod
+    plan:
+      # Trigger the pipeline when there is a PR merge to the "main" branch
+      - get: repo-read
+        trigger: true
+      # Get the current version
+      - get: versioning-file-current
+        resource: versioning-file
+      # Save the current version to a variable
+      - load_var: current_version
+        file: versioning-file-current/version
+      # Get the bumped version
+      - get: versioning-file-bumped
+        resource: versioning-file
+        params:
+          bump: patch
+      # Save the bumped version to a variable
+      - load_var: bumped_version
+        file: versioning-file-bumped/version
+      # Get the dev image
+      - get: dev-image-registry
+        params:
+          format: oci
+      # Push the dev image with the bumped version (without the "dev" variant) as the prod image
+      - put: prod-image-registry
+        no_get: true
+        params:
+          image: dev-image-registry/image.tar
+          version: ((.:bumped_version))
+      # Use the new prod image in the manifest file
+      - get: bump-repo
+      - task: bump-with-yq
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/mikefarah/yq
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))"' ((manifest_path))
+            user: root
+      # Commit the bumped manifest file
+      - task: git-commit-bumped-manifest
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: docker.io/alpine/git
+          inputs:
+            - name: bump-repo
+          outputs:
+            - name: bump-repo
+          run:
+            path: sh
+            args:
+              - -exc
+              - |
+                cd bump-repo
+                git config --global user.email '<concourse.bot@example.com>'
+                git config --global user.name "Concourse Bot"
+                git add ((manifest_path))
+                git commit -m 'bump to ((.:bumped_version))'
+      # Push the committed bumped manifest file
+      - put: bump-repo
+        no_get: true
+        params:
+          repository: bump-repo
+      # Push the new version to the version file in the "version" branch
+      - put: versioning-file
+        no_get: true
+        params:
+          bump: patch
