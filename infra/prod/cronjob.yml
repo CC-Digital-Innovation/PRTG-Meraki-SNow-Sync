@@ -69,4 +69,4 @@ spec:
   template:
     spec:
       containers:
-        - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.18
+        - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.19
