@@ -247,7 +247,7 @@ def test_meraki_site_info_regex():
     assert MERAKI_SITE_INFO_REGEX.match('1') is None
     assert MERAKI_SITE_INFO_REGEX.match('(1') is None
     assert MERAKI_SITE_INFO_REGEX.match('1)') is None
-    
+
 
 def test_prtg_clover_name_regex():
     # Test valid PRTG Clover names.
@@ -324,7 +324,7 @@ def test_prtg_clover_name_regex():
     assert PRTG_CLOVER_NAME_REGEX.match('[SiteName123] Window 01 dc:95:24:12:34:56') is None
     assert PRTG_CLOVER_NAME_REGEX.match('[SiteName123] Window 01 hgrea:gruioew') is None
     assert PRTG_CLOVER_NAME_REGEX.match('[SiteName123] Window 01 garah') is None
-    
+
 
 def test_prtg_site_in_clover_name_regex():
     # Test valid PRTG site info in Clover names.

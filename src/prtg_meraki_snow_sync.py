@@ -2026,8 +2026,7 @@ def initialize_logger() -> None:
             
         # Add the local log file to the logger.
         now_utc = datetime.now(timezone.utc)
-        logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log', 
-                    format=logger_format)
+        logger.add(f'{SCRIPT_PATH}/../logs/{LOGGER_FILE_NAME}_log_{now_utc.strftime("%Y-%m-%d_%H-%M-%S-%Z")}.log', format=logger_format)
 
 
 def log_title(title: str) -> str:

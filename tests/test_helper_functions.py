@@ -87,7 +87,7 @@ def test_get_window_number():
     assert get_window_number('    [SiteName123]     Window     01    74:d4:dd:00:00:00    ') == '01'
     assert get_window_number('    [SiteName123] Window 02 d4:95:24:00:00:00') == '02'
     assert get_window_number('  [SiteName123]  Window 10    74:d4:dd:00:00:00    ') == '10'
-
+    
     # Test device names with dashes.
     assert get_window_number('[SiteName123] Window 01 d4-95-24-00-00-00') == '01'
     assert get_window_number('[SiteName123] Window 99 74-d4-dd-00-00-00') == '99'
