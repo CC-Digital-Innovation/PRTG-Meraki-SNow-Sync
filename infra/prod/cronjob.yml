@@ -63,6 +63,6 @@ spec:
                 readOnlyRootFilesystem: true
           restartPolicy: Never
           serviceAccountName: prtg-meraki-snow-sync
-    backoffLimit: 3
+      backoffLimit: 3
   schedule: "0 23 * * *"
   timeZone: US/Pacific
