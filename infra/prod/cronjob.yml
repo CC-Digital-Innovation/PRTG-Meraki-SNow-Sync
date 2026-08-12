@@ -52,7 +52,7 @@ spec:
             runAsUser: 10014
             runAsGroup: 10015
           containers:
-            - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.12
+            - image: harbor.pscp-css.support/library/prtg-meraki-snow-sync:0.0.19
               name: prtg-meraki-snow-sync
               command: ['sh', '-c', 'source /vault/secrets/meraki && source /vault/secrets/prtg && source /vault/secrets/servicenow && source /vault/secrets/sync_script && python ./src/prtg_meraki_snow_sync.py']
               securityContext:
@@ -64,5 +64,5 @@ spec:
           restartPolicy: Never
           serviceAccountName: prtg-meraki-snow-sync
       backoffLimit: 3
-  schedule: "0 23 * * *"
+  schedule: 0 23 * * *
   timeZone: US/Pacific
