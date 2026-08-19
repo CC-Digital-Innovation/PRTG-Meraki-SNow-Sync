@@ -24,22 +24,12 @@ resources:
       username: ((git.username))
       password: ((git.password))
 
-  # Production image registry resource
-  - name: prod-image-registry
+  # Image registry resource
+  - name: image-registry
     type: registry-image
     icon: lighthouse-on
     source:
       repository: ((harbor.repository))/((image))
-      username: ((harbor.username))
-      password: ((harbor.password))
-
-  # Development image registry resource
-  - name: dev-image-registry
-    type: registry-image
-    icon: lighthouse-on
-    source:
-      repository: ((harbor.repository))/((image))
-      variant: dev
       username: ((harbor.username))
       password: ((harbor.password))
 
@@ -79,7 +69,7 @@ jobs:
       - load_var: bumped_version
         file: versioning-file-bumped/version
       # Get the dev image
-      - get: dev-image-registry
+      - get: image-registry
         params:
           format: oci
       # Push the dev image with the bumped version (without the "dev" variant) as the prod image
@@ -107,7 +97,7 @@ jobs:
               - -exc
               - |
                 cd bump-repo
-                yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))"' ((manifest_path))
+                yq -ie '.spec.jobTemplate.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))"' ((manifest_path))
             user: root
       # Commit the bumped manifest file
       - task: git-commit-bumped-manifest
