@@ -1,4 +1,4 @@
-FROM python:3.13.14-alpine3.24 AS builder
+FROM python:3.14.7-alpine3.24 AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -14,7 +14,7 @@ RUN python -m pip install --upgrade pip==26.1.2 && \
 COPY ./src .
 
 
-FROM python:3.13.14-alpine3.24 AS runtime
+FROM python:3.14.7-alpine3.24 AS runtime
 
 LABEL org.opencontainers.image.authors="Anthony Farina"
 
