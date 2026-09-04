@@ -11,6 +11,9 @@ COPY requirements.txt .
 RUN python -m pip install --upgrade pip==26.1.2 && \
     python -m pip install --no-cache-dir --prefix=/install -r requirements.txt
 
+# Fix CVE for msgpack and setuptools.
+RUN python -m pip install --upgrade --no-cache-dir --prefix=/install msgpack==1.2.1 setuptools==78.1.1
+
 COPY ./src .
 
 
