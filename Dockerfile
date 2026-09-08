@@ -14,6 +14,9 @@ RUN python -m pip install --upgrade pip==26.1.2 && \
 # Fix CVE for msgpack and setuptools.
 RUN python -m pip install --upgrade --no-cache-dir --prefix=/install msgpack==1.2.2 setuptools==84.0.0
 
+# Upgrade alpine packages.
+RUN apk update && apk upgrade
+
 COPY ./src .
 
 
