@@ -139,13 +139,34 @@ jobs:
             args:
               - -exc
               - |
-                cd bump-repo
-                git config --global user.email '<concourse.bot@example.com>'
-                git config --global user.name "Concourse Bot"
-                git add ((manifest_path))
-                git commit -m 'bump to ((.:bumped_version))-dev'
-      # Push the committed bumped manifest file
-      - put: bump-repo
-        no_get: true
-        params:
-          repository: bump-repo
+                if git diff --quiet HEAD; then
+                    echo "No changes!"
+                    exit 1
+                else
+                    cd bump-repo
+                    git config --global user.email '<concourse.bot@example.com>'
+                    git config --global user.name "Concourse Bot"
+                    git add ((manifest_path))
+                    git commit -m 'bump to ((.:bumped_version))-dev'
+                    exit 0
+                fi
+        on_success:
+          # Push the committed bumped manifest file
+          put: bump-repo
+          no_get: true
+          params:
+            repository: bump-repo
+        on_error:
+          # Inform the user that we'll be using the same version since there are no changes to the manifest.
+          task: no-manifest-changes-detected
+          config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source:
+                repository: docker.io/alpine/git
+            run:
+              path: sh
+              args:
+                - -exc
+                - echo "Using the same manifest as before, since there were no changes to commit."
