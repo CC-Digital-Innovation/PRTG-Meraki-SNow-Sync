@@ -24,8 +24,19 @@ resources:
       username: ((git.username))
       password: ((git.password))
 
-  # Image registry resource
-  - name: image-registry
+  # Image registry resource for the latest 'dev' image
+  - name: latest-dev-image-registry
+    type: registry-image
+    icon: lighthouse-on
+    source:
+      repository: ((harbor.repository))/((image))
+      username: ((harbor.username))
+      password: ((harbor.password))
+      tag_regex: '*.*.*-dev'
+      created_at_sort: 'true'
+
+  # Image registry resource for the prod image
+  - name: prod-image-registry
     type: registry-image
     icon: lighthouse-on
     source:
@@ -69,14 +80,14 @@ jobs:
       - load_var: bumped_version
         file: versioning-file-bumped/version
       # Get the dev image
-      - get: image-registry
+      - get: latest-dev-image-registry
         params:
           format: oci
       # Push the dev image with the bumped version (without the "dev" variant) as the prod image
       - put: prod-image-registry
         no_get: true
         params:
-          image: dev-image-registry/image.tar
+          image: latest-dev-image-registry/image.tar
           version: ((.:bumped_version))
       # Use the new prod image in the manifest file
       - get: bump-repo
