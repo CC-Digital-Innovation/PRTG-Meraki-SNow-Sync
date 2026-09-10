@@ -155,7 +155,7 @@ jobs:
           no_get: true
           params:
             repository: bump-repo
-        on_error:
+        on_failure:
           # Inform the user that we'll be using the same version since there are no changes to the manifest.
           task: no-manifest-changes-detected
           config:
