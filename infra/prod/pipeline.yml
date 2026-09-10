@@ -32,7 +32,7 @@ resources:
       repository: ((harbor.repository))/((image))
       username: ((harbor.username))
       password: ((harbor.password))
-      tag_regex: '+\.+\.+-dev'
+      tag_regex: '.+\..+\..+-dev'
       created_at_sort: true
 
   # Image registry resource for the prod image
