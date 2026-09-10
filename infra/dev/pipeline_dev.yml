@@ -139,11 +139,10 @@ jobs:
             args:
               - -exc
               - |
-                if git diff --quiet HEAD; then
-                    echo "No changes!"
+                cd bump-repo
+                if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
                     exit 1
                 else
-                    cd bump-repo
                     git config --global user.email '<concourse.bot@example.com>'
                     git config --global user.name "Concourse Bot"
                     git add ((manifest_path))
