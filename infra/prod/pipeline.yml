@@ -33,7 +33,7 @@ resources:
       username: ((harbor.username))
       password: ((harbor.password))
       tag_regex: '*.*.*-dev'
-      created_at_sort: 'true'
+      created_at_sort: true
 
   # Image registry resource for the prod image
   - name: prod-image-registry
