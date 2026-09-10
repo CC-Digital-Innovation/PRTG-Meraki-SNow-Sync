@@ -8,10 +8,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Create and activate the virtual environment.
-RUN python -m venv /opt/build-venv
-ENV PATH="/opt/build-venv/bin:$PATH"
-
 # Upgrade pip and install requirements.
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
@@ -25,7 +21,7 @@ LABEL org.opencontainers.image.authors="Anthony Farina"
 
 WORKDIR /app
 
-# Patch alpine packages and install clean Python runtime.
+# Patch alpine packages and install clean Python runtime (without pip).
 RUN apk update && apk upgrade --no-cache && \
     apk add --no-cache python3
 
@@ -33,21 +29,16 @@ RUN apk update && apk upgrade --no-cache && \
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Create and activate the virtual environment.
-RUN python -m venv --without-pip /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+# Copy app's dependencies.
+COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
 
-# Copy ONLY the installed dependencies and entrypoint scripts from builder.
-COPY --from=builder /opt/build-venv/lib/python3.14/site-packages /opt/venv/lib/python3.14/site-packages
-COPY --from=builder /opt/build-venv/bin /opt/venv/bin
+# Let Python know where the app's dependencies are located.
+ENV PYTHONPATH="/usr/local/lib/python3.14/site-packages"
 
-# Remove pip and setuptools from the runtime image to reduce size and potential vulnerabilities.
+# Remove pip and setuptools from the runtime image to reduce size and vulnerabilities.
 RUN rm -rf \
     /usr/local/lib/python3.14/site-packages/pip* \
-    /usr/local/lib/python3.14/site-packages/setuptools* \
-    /usr/local/lib/python3.14/ensurepip/_bundled/setuptools* \
-    /opt/venv/lib/python3.14/site-packages/pip* \
-    /opt/venv/lib/python3.14/site-packages/setuptools*
+    /usr/local/lib/python3.14/site-packages/setuptools*
 
 # Copy source code.
 COPY ./src .
