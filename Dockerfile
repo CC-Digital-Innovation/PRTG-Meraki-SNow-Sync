@@ -1,35 +1,52 @@
-FROM python:3.13.14-alpine3.24 AS builder
+# Builder stage.
+FROM python:3.14.7-alpine3.24 AS builder
 
+WORKDIR /app
+
+# Set environment variables to reduce writing to disk and improve performance.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-WORKDIR /app
-
+# Upgrade pip and install requirements.
 COPY requirements.txt .
-
-RUN python -m pip install --upgrade pip==26.1.2 && \
-    python -m pip install --no-cache-dir --prefix=/install -r requirements.txt
-
-COPY ./src .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 
-FROM python:3.13.14-alpine3.24 AS runtime
+# Runtime stage.
+FROM alpine:3.24 AS runtime
 
 LABEL org.opencontainers.image.authors="Anthony Farina"
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
-
 WORKDIR /app
 
+# Patch alpine packages and install clean Python runtime (without pip).
+RUN apk update && apk upgrade --no-cache && \
+    apk add --no-cache python3
+
+# Set environment variables to reduce writing to disk and improve performance.
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Copy app's dependencies.
+COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages
+
+# Let Python know where the app's dependencies are located.
+ENV PYTHONPATH="/usr/local/lib/python3.14/site-packages"
+
+# Remove pip and setuptools from the runtime image to reduce size and vulnerabilities.
+RUN rm -rf \
+    /usr/local/lib/python3.14/site-packages/pip* \
+    /usr/local/lib/python3.14/site-packages/setuptools*
+
+# Copy source code.
+COPY ./src .
+
+# Set non-root user and group to run the app.
 RUN addgroup -S -g 10015 prtg_meraki_snow_sync && \
     adduser -S -u 10014 -G prtg_meraki_snow_sync prtg_meraki_snow_sync
-
-COPY --from=builder /install /usr/local
-COPY --from=builder /app /app
-
 USER prtg_meraki_snow_sync:prtg_meraki_snow_sync
 
+# Set the entry for the container to run the app.
 ENTRYPOINT ["python", "prtg_meraki_snow_sync.py"]

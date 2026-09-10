@@ -120,31 +120,37 @@ jobs:
               - -exc
               - |
                 cd bump-repo
-                yq -i '.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))-dev"' ((manifest_path))
+                yq -ie '.spec.jobTemplate.spec.template.spec.containers[0].image = "((harbor.repository))/((image)):((.:bumped_version))-dev"' ((manifest_path))
             user: root
-      # Commit the bumped manifest file
-      - task: git-commit-bumped-manifest
-        config:
-          platform: linux
-          image_resource:
-            type: registry-image
-            source:
-              repository: docker.io/alpine/git
-          inputs:
-            - name: bump-repo
-          outputs:
-            - name: bump-repo
-          run:
-            path: sh
-            args:
-              - -exc
-              - |
-                cd bump-repo
-                git config --global user.email '<concourse.bot@example.com>'
-                git config --global user.name "Concourse Bot"
-                git add ((manifest_path))
-                git commit -m 'bump to ((.:bumped_version))-dev'
-      # Push the committed bumped manifest file
+      # Try to commit the bumped manifest file. If there are no changes, it's ok if this fails.
+      - try:
+          task: git-commit-bumped-manifest
+          config:
+            platform: linux
+            image_resource:
+              type: registry-image
+              source:
+                repository: docker.io/alpine/git
+            inputs:
+              - name: bump-repo
+            outputs:
+              - name: bump-repo
+            run:
+              path: sh
+              args:
+                - -exc
+                - |
+                  cd bump-repo
+                  if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+                      echo "Using the same manifest as before, since there were no changes to commit."
+                      exit 1
+                  else
+                      git config --global user.email '<concourse.bot@example.com>'
+                      git config --global user.name "Concourse Bot"
+                      git add ((manifest_path))
+                      git commit -m 'bump to ((.:bumped_version))-dev'
+                      exit 0
+                  fi
       - put: bump-repo
         no_get: true
         params:
