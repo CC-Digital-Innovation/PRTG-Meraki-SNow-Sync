@@ -89,6 +89,31 @@ jobs:
         params:
           image: latest-dev-image-registry/image.tar
           version: ((.:bumped_version))
+      # Remove the "dev" tag from the image.
+      - task: delete-dev-tag
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: alpine
+          params:
+            HARBOR_URL: ((harbor.repository))
+            PROJECT_NAME: library
+            REPOSITORY_NAME: ((image))
+            TAG_NAME: ((.:bumped_version))-dev
+            HARBOR_USER: ((harbor.username))
+            HARBOR_PASSWORD: ((harbor.password))
+          run:
+            path: sh
+            args:
+              - -c
+              - |
+                apk add --no-cache curl
+                
+                curl -X DELETE \
+                  -u "${HARBOR_USER}:${HARBOR_PASSWORD}" \
+                  "${HARBOR_URL}/api/v2.0/projects/${PROJECT_NAME}/repositories/${REPOSITORY_NAME}/artifacts/${TAG_NAME}/tags/${TAG_NAME}"
       # Use the new prod image in the manifest file
       - get: bump-repo
       - task: bump-with-yq
