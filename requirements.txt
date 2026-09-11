@@ -1,10 +1,5 @@
-# Main dependencies
 loguru==0.7.3
 meraki==4.5.0
 pysnow==0.7.17
 python-dotenv==1.2.3
 requests==2.34.2
-
-# Security patches for CVEs
-msgpack==1.2.2
-setuptools==84.0.0
