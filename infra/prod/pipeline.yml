@@ -98,7 +98,7 @@ jobs:
             source:
               repository: alpine
           params:
-            HARBOR_URL: ((harbor.repository))
+            HARBOR_URL: ((harbor.url))
             PROJECT_NAME: library
             REPOSITORY_NAME: ((image))
             TAG_NAME: ((.:bumped_version))-dev
