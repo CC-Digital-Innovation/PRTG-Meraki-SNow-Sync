@@ -110,7 +110,7 @@ jobs:
               - -c
               - |
                 curl -X DELETE \
-                  -u "${HARBOR_USER}:${HARBOR_PASSWORD}" \
+                  -u '${HARBOR_USER}:${HARBOR_PASSWORD}' \
                   "${HARBOR_URL}/api/v2.0/projects/${PROJECT_NAME}/repositories/${REPOSITORY_NAME}/artifacts/${TAG_NAME}/tags/${TAG_NAME}"
       # Use the new prod image in the manifest file
       - get: bump-repo
